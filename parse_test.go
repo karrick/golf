@@ -139,3 +139,15 @@ func TestParseHyphenAfterShort(t *testing.T) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 }
+
+func TestPanicsWhenAttemptToRedefineFlag(t *testing.T) {
+	ensurePanic(t, "cannot add option that duplicates short flag: 'f'", func() {
+		_ = Uint("f", "flubber", 0, "some example flag")
+		_ = Uint("f", "blubber", 0, "some example flag")
+	})
+
+	ensurePanic(t, "cannot add option that duplicates long flag: \"flubber\"", func() {
+		_ = Uint("f", "flubber", 0, "some example flag")
+		_ = Uint("b", "flubber", 0, "some example flag")
+	})
+}

@@ -22,7 +22,7 @@ func TestParseUint64MissingArgument(t *testing.T) {
 		a := Uint64("t", "little", 0, "little")
 		b := Uint64("T", "big", 0, "big")
 
-		if got, want := parse("-t"), "option requires argument: 't'"; got.Error() != want {
+		if got, want := parse("-t"), "option requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 

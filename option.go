@@ -34,6 +34,19 @@ func optionFromShort(short rune) option {
 	return nil
 }
 
+func redefinition(short rune, long string) error {
+	var r rune
+	for _, opt := range options {
+		if long != "" && long == opt.Long() {
+			return fmt.Errorf("cannot add option that duplicates long flag: %q", long)
+		}
+		if short != r && short == opt.Short() {
+			return fmt.Errorf("cannot add option that duplicates short flag: %q", short)
+		}
+	}
+	return nil
+}
+
 // option is list of methods any concrete option needs to have for use by parser.
 type option interface {
 	Default() interface{}   // default value of command line option
@@ -76,6 +89,9 @@ func Bool(short, long string, value bool, description string) *bool {
 	}
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
+	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
 	}
 	o := &optionBool{
 		description: description,
@@ -122,6 +138,9 @@ func Duration(short, long string, value time.Duration, description string) *time
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
 	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
+	}
 	o := &optionDuration{
 		description: description,
 		long:        long,
@@ -166,6 +185,9 @@ func Float(short, long string, value float64, description string) *float64 {
 	}
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
+	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
 	}
 	o := &optionFloat{
 		description: description,
@@ -212,6 +234,9 @@ func Int(short, long string, value int, description string) *int {
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
 	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
+	}
 	o := &optionInt{
 		description: description,
 		long:        long,
@@ -256,6 +281,9 @@ func Int64(short, long string, value int64, description string) *int64 {
 	}
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
+	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
 	}
 	o := &optionInt64{
 		description: description,
@@ -302,6 +330,9 @@ func Uint(short, long string, value uint, description string) *uint {
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
 	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
+	}
 	o := &optionUint{
 		description: description,
 		long:        long,
@@ -347,6 +378,9 @@ func Uint64(short, long string, value uint64, description string) *uint64 {
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
 	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
+	}
 	o := &optionUint64{
 		description: description,
 		long:        long,
@@ -391,6 +425,9 @@ func String(short, long string, value string, description string) *string {
 	}
 	if strings.HasPrefix(long, "-") {
 		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
+	}
+	if err := redefinition(r, long); err != nil {
+		panic(err)
 	}
 	o := &optionString{
 		description: description,

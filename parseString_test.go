@@ -22,7 +22,7 @@ func TestParseStringMissingArgument(t *testing.T) {
 		a := String("t", "little", "", "little")
 		b := String("T", "big", "", "big")
 
-		if got, want := parse("-t"), "option requires argument: 't'"; got.Error() != want {
+		if got, want := parse("-t"), "option requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
