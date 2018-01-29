@@ -14,6 +14,9 @@ provides the values to your program based on the user's arguments.
 
 ## Usage Example
 
+Documentation is available via
+[![GoDoc](https://godoc.org/github.com/karrick/golf?status.svg)](https://godoc.org/github.com/karrick/golf).
+
 Use is nearly identical to the standard library flag package. The main
 difference is the ability to use both short and long option names. You
 may use either short, long, or both command line option flags for each
