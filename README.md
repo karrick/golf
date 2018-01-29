@@ -79,8 +79,39 @@ is not necessarily acceptable for libraries, if command line options
 are not correctly defined by the program the case will be caught early
 by running the program.
 
+## Help Example
+
+Invoking `golf.Usage()` will display the program name, followed by a
+list of command line option flags. The short and long flag names are
+displayed if they are both defined, otherwise, just the short or the
+long is displayed. After the flag name will be a token representing
+the expected value data type, so the user knows what type of parsing
+will be invoked on any value provided for that flag.
+
+On a separate line after each flag is printed a tab character,
+followed by the description and the default value for that flag.
+
+```
+Usage of example:
+  -h, --help
+	Display command line help and exit (default: false)
+  -l, --limit int
+	Limit output to specified number of lines (default: 0)
+  -q, --quiet
+	Do not print intermediate errors to stderr (default: false)
+  -v, --verbose
+	Print verbose output to stderr and exit (default: false)
+  -V, --version
+	Print version output to stderr and exit (default: false)
+  -s, --servers string
+	string with both (default: host1,host2)
+  -t string
+	string with short (default: host3,host4)
+  --flubbers string
+	string with long (default: host5)
+```
+
 ## TODO
 
 * Support remaining functions from flag package in the standard
-  library, such as Set, UnquoteUsage, Var, Visit, and VisitAll
-  functions.
+  library.
