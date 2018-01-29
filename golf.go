@@ -10,7 +10,11 @@ import (
 // remaining argument after flags have been processed. Arg returns an empty
 // string if the requested element does not exist.
 func Arg(i int) string {
-	return os.Args[argIndex+i]
+	n := argIndex + i
+	if n > len(os.Args)-1 {
+		return ""
+	}
+	return os.Args[n]
 }
 
 // Args returns the non-flag command-line arguments.
@@ -66,7 +70,7 @@ func PrintDefaults() {
 	}
 }
 
-// Usage prints command line usage to stder.
+// Usage prints command line usage to stderr.
 func Usage() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", filepath.Base(os.Args[0]))
 	PrintDefaults()
