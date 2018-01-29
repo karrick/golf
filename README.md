@@ -82,4 +82,5 @@ by running the program.
 ## TODO
 
 * Support remaining functions from flag package in the standard
-  library.
+  library, such as Set, UnquoteUsage, Var, Visit, and VisitAll
+  functions.

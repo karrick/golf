@@ -133,7 +133,7 @@ func parse(line string) error {
 				switch want := opt.NextState(); want {
 				case wantBool:
 					state = wantShortOptionName
-					opt.(*optionBool).value = true
+					*opt.(*optionBool).pv = true
 					argsProcessed++
 				default:
 					state = ignorePossibleSpace
@@ -155,7 +155,7 @@ func parse(line string) error {
 				}
 				switch want := opt.NextState(); want {
 				case wantBool:
-					opt.(*optionBool).value = true
+					*opt.(*optionBool).pv = true
 					argsProcessed++
 				default:
 					return fmt.Errorf("cannot parse argument: %q", os.Args[argIndex])
@@ -178,7 +178,7 @@ func parse(line string) error {
 					}
 					switch want := opt.NextState(); want {
 					case wantBool:
-						opt.(*optionBool).value = true
+						*opt.(*optionBool).pv = true
 						argsProcessed++
 					default:
 						state = ignorePossibleSpace
@@ -199,7 +199,7 @@ func parse(line string) error {
 				if err != nil {
 					return err
 				}
-				opt.(*optionDuration).value = value
+				*opt.(*optionDuration).pv = value
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -214,7 +214,7 @@ func parse(line string) error {
 				if err != nil {
 					return err
 				}
-				opt.(*optionFloat).value = value
+				*opt.(*optionFloat).pv = value
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -229,7 +229,7 @@ func parse(line string) error {
 				if err != nil {
 					return err
 				}
-				opt.(*optionInt).value = int(value)
+				*opt.(*optionInt).pv = int(value)
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -244,7 +244,7 @@ func parse(line string) error {
 				if err != nil {
 					return err
 				}
-				opt.(*optionInt64).value = value
+				*opt.(*optionInt64).pv = value
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -259,7 +259,7 @@ func parse(line string) error {
 				if err != nil {
 					return err
 				}
-				opt.(*optionUint).value = uint(value)
+				*opt.(*optionUint).pv = uint(value)
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -274,7 +274,7 @@ func parse(line string) error {
 				if err != nil {
 					return err
 				}
-				opt.(*optionUint64).value = value
+				*opt.(*optionUint64).pv = value
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -285,7 +285,7 @@ func parse(line string) error {
 				argIndex++
 				state = anything
 
-				opt.(*optionString).value = optionValue
+				*opt.(*optionString).pv = optionValue
 				argsProcessed++
 			} else {
 				optionValue += string(r)
@@ -316,7 +316,7 @@ func parse(line string) error {
 		}
 		switch want := opt.NextState(); want {
 		case wantBool:
-			opt.(*optionBool).value = true
+			*opt.(*optionBool).pv = true
 			argsProcessed++
 		default:
 			return fmt.Errorf("option requires argument: %q", longOptionName)
@@ -329,7 +329,7 @@ func parse(line string) error {
 		if err != nil {
 			return err
 		}
-		opt.(*optionDuration).value = value
+		*opt.(*optionDuration).pv = value
 		argsProcessed++
 	case wantFloat:
 		if optionValue == "" {
@@ -339,7 +339,7 @@ func parse(line string) error {
 		if err != nil {
 			return err
 		}
-		opt.(*optionFloat).value = value
+		*opt.(*optionFloat).pv = value
 		argsProcessed++
 	case wantInt:
 		if optionValue == "" {
@@ -349,7 +349,7 @@ func parse(line string) error {
 		if err != nil {
 			return err
 		}
-		opt.(*optionInt).value = int(value)
+		*opt.(*optionInt).pv = int(value)
 		argsProcessed++
 	case wantInt64:
 		if optionValue == "" {
@@ -359,7 +359,7 @@ func parse(line string) error {
 		if err != nil {
 			return err
 		}
-		opt.(*optionInt64).value = value
+		*opt.(*optionInt64).pv = value
 		argsProcessed++
 	case wantUint:
 		if optionValue == "" {
@@ -369,7 +369,7 @@ func parse(line string) error {
 		if err != nil {
 			return err
 		}
-		opt.(*optionUint).value = uint(value)
+		*opt.(*optionUint).pv = uint(value)
 		argsProcessed++
 	case wantUint64:
 		if optionValue == "" {
@@ -379,13 +379,13 @@ func parse(line string) error {
 		if err != nil {
 			return err
 		}
-		opt.(*optionUint64).value = value
+		*opt.(*optionUint64).pv = value
 		argsProcessed++
 	case wantString:
 		if optionValue == "" {
 			return fmt.Errorf("option requires argument")
 		}
-		opt.(*optionString).value = optionValue
+		*opt.(*optionString).pv = optionValue
 		argsProcessed++
 	default:
 		return fmt.Errorf("unexpected parser state: %v", state)

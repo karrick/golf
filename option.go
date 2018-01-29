@@ -79,10 +79,11 @@ type option interface {
 }
 
 type optionBool struct {
-	description string
+	pv          *bool
 	long        string
+	description string
 	short       rune
-	def, value  bool
+	def         bool
 }
 
 func (o optionBool) Default() interface{}   { return o.def }
@@ -97,26 +98,32 @@ func (o optionBool) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Bool(short, long string, value bool, description string) *bool {
+	var v bool
+	BoolVar(&v, short, long, value, description)
+	return &v
+}
+
+func BoolVar(pv *bool, short, long string, value bool, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionBool{
+	*pv = value
+	options = append(options, &optionBool{
 		description: description,
 		long:        long,
 		short:       r,
-		value:       value,
+		pv:          pv,
 		def:         value,
-	}
-	options = append(options, o)
-	return &o.value
+	})
 }
 
 type optionDuration struct {
+	pv          *time.Duration
 	description string
 	long        string
 	short       rune
-	def, value  time.Duration
+	def         time.Duration
 }
 
 func (o optionDuration) Default() interface{}   { return o.def }
@@ -131,26 +138,32 @@ func (o optionDuration) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Duration(short, long string, value time.Duration, description string) *time.Duration {
+	var v time.Duration
+	DurationVar(&v, short, long, value, description)
+	return &v
+}
+
+func DurationVar(pv *time.Duration, short, long string, value time.Duration, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionDuration{
+	*pv = value
+	options = append(options, &optionDuration{
 		description: description,
 		long:        long,
 		short:       r,
+		pv:          pv,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+	})
 }
 
 type optionFloat struct {
+	pv          *float64
 	description string
 	short       rune
 	long        string
-	def, value  float64
+	def         float64
 }
 
 func (o optionFloat) Default() interface{}   { return o.def }
@@ -165,26 +178,32 @@ func (o optionFloat) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Float(short, long string, value float64, description string) *float64 {
+	var v float64
+	FloatVar(&v, short, long, value, description)
+	return &v
+}
+
+func FloatVar(pv *float64, short, long string, value float64, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionFloat{
+	*pv = value
+	options = append(options, &optionFloat{
 		description: description,
 		long:        long,
 		short:       r,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+		pv:          pv,
+	})
 }
 
 type optionInt struct {
+	pv          *int
 	description string
 	short       rune
 	long        string
-	def, value  int
+	def         int
 }
 
 func (o optionInt) Default() interface{}   { return o.def }
@@ -199,26 +218,32 @@ func (o optionInt) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Int(short, long string, value int, description string) *int {
+	var v int
+	IntVar(&v, short, long, value, description)
+	return &v
+}
+
+func IntVar(pv *int, short, long string, value int, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionInt{
+	*pv = value
+	options = append(options, &optionInt{
 		description: description,
 		long:        long,
 		short:       r,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+		pv:          pv,
+	})
 }
 
 type optionInt64 struct {
+	pv          *int64
 	description string
 	short       rune
 	long        string
-	def, value  int64
+	def         int64
 }
 
 func (o optionInt64) Default() interface{}   { return o.def }
@@ -233,26 +258,32 @@ func (o optionInt64) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Int64(short, long string, value int64, description string) *int64 {
+	var v int64
+	Int64Var(&v, short, long, value, description)
+	return &v
+}
+
+func Int64Var(pv *int64, short, long string, value int64, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionInt64{
+	*pv = value
+	options = append(options, &optionInt64{
 		description: description,
 		long:        long,
 		short:       r,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+		pv:          pv,
+	})
 }
 
 type optionUint struct {
+	pv          *uint
 	description string
 	short       rune
 	long        string
-	def, value  uint
+	def         uint
 }
 
 func (o optionUint) Default() interface{}   { return o.def }
@@ -267,26 +298,32 @@ func (o optionUint) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Uint(short, long string, value uint, description string) *uint {
+	var v uint
+	UintVar(&v, short, long, value, description)
+	return &v
+}
+
+func UintVar(pv *uint, short, long string, value uint, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionUint{
+	*pv = value
+	options = append(options, &optionUint{
 		description: description,
 		long:        long,
 		short:       r,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+		pv:          pv,
+	})
 }
 
 type optionUint64 struct {
+	pv          *uint64
 	description string
 	short       rune
 	long        string
-	def, value  uint64
+	def         uint64
 }
 
 func (o optionUint64) Default() interface{}   { return o.def }
@@ -301,26 +338,32 @@ func (o optionUint64) NextState() parserState { return wantUint64 }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Uint64(short, long string, value uint64, description string) *uint64 {
+	var v uint64
+	Uint64Var(&v, short, long, value, description)
+	return &v
+}
+
+func Uint64Var(pv *uint64, short, long string, value uint64, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionUint64{
+	*pv = value
+	options = append(options, &optionUint64{
 		description: description,
 		long:        long,
 		short:       r,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+		pv:          pv,
+	})
 }
 
 type optionString struct {
+	pv          *string
 	description string
 	short       rune
 	long        string
-	def, value  string
+	def         string
 }
 
 func (o optionString) Default() interface{}   { return o.def }
@@ -335,17 +378,22 @@ func (o optionString) NextState() parserState { return wantString }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func String(short, long string, value string, description string) *string {
+	var v string
+	StringVar(&v, short, long, value, description)
+	return &v
+}
+
+func StringVar(pv *string, short, long string, value string, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
 		panic(err)
 	}
-	o := &optionString{
+	*pv = value
+	options = append(options, &optionString{
 		description: description,
 		long:        long,
 		short:       r,
 		def:         value,
-		value:       value,
-	}
-	options = append(options, o)
-	return &o.value
+		pv:          pv,
+	})
 }
