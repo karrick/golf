@@ -32,6 +32,7 @@ func resetParser() {
 func Parse() {
 	// combine os.Args to a single string
 	if err := parse(strings.Join(os.Args[1:], " ")); err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		Usage()
 		os.Exit(2)
 	}
@@ -101,6 +102,7 @@ func parse(line string) error {
 		if state == ignorePossibleSpace {
 			state = stateAfterPossibleSpace
 			if unicode.IsSpace(r) {
+				argIndex++
 				continue // ignore this rune
 			}
 		}
@@ -142,10 +144,10 @@ func parse(line string) error {
 
 		case wantShortOptionName:
 			if unicode.IsSpace(r) {
-				argIndex++ // no more bool options
+				argIndex++
 				state = anything
 			} else if r == '-' {
-				return fmt.Errorf("cannot parse argument: ", os.Args[argIndex])
+				return fmt.Errorf("cannot parse argument: %q", os.Args[argIndex])
 			} else {
 				opt = optionFromShort(r)
 				if opt == nil {
@@ -292,7 +294,7 @@ func parse(line string) error {
 		}
 	}
 
-	// if state != nothing {
+	// if state != anything {
 	// 	fmt.Fprintf(os.Stderr, "state: %v; opt: %v\n", state, opt)
 	// }
 
@@ -303,9 +305,11 @@ func parse(line string) error {
 	case consumedSingleHyphen:
 		return errors.New("hyphen without options")
 	case ignorePossibleSpace:
+		if long := opt.Long(); long != "" {
+			return fmt.Errorf("option requires argument: %q", long)
+		}
 		return fmt.Errorf("option requires argument: %q", opt.Short())
 	case wantLongOptionName:
-		// fmt.Fprintf(os.Stderr, "long name: %q\n", longOptionName)
 		opt = optionFromLong(longOptionName)
 		if opt == nil {
 			return fmt.Errorf("unknown option: %q", longOptionName)
@@ -319,7 +323,7 @@ func parse(line string) error {
 		}
 	case wantDuration:
 		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+			return errors.New("option requires argument")
 		}
 		value, err := time.ParseDuration(optionValue)
 		if err != nil {
