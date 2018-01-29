@@ -142,11 +142,13 @@ func TestParseHyphenAfterShort(t *testing.T) {
 
 func TestPanicsWhenAttemptToRedefineFlag(t *testing.T) {
 	ensurePanic(t, "cannot add option that duplicates short flag: 'f'", func() {
+		resetParser()
 		_ = Uint("f", "flubber", 0, "some example flag")
 		_ = Uint("f", "blubber", 0, "some example flag")
 	})
 
 	ensurePanic(t, "cannot add option that duplicates long flag: \"flubber\"", func() {
+		resetParser()
 		_ = Uint("f", "flubber", 0, "some example flag")
 		_ = Uint("b", "flubber", 0, "some example flag")
 	})

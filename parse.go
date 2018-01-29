@@ -99,10 +99,14 @@ func parse(line string) error {
 	for _, r := range line {
 		// fmt.Fprintf(os.Stderr, "state: %v; rune: %c\n", state, r)
 
+		isSpace := unicode.IsSpace(r)
+		if isSpace {
+			argIndex++
+		}
+
 		if state == ignorePossibleSpace {
 			state = stateAfterPossibleSpace
-			if unicode.IsSpace(r) {
-				argIndex++
+			if isSpace {
 				continue // ignore this rune
 			}
 		}
@@ -110,8 +114,8 @@ func parse(line string) error {
 		switch state {
 
 		case anything:
-			if unicode.IsSpace(r) {
-				argIndex++
+			if isSpace {
+				// no-op
 			} else if r == '-' {
 				state = consumedSingleHyphen
 			} else {
@@ -119,32 +123,30 @@ func parse(line string) error {
 			}
 
 		case consumedSingleHyphen:
-			if unicode.IsSpace(r) {
-				argIndex++
+			if isSpace {
 				return errors.New("hyphen without options")
 			} else if r == '-' {
-				state = wantLongOptionName
 				longOptionName = ""
+				state = wantLongOptionName
 			} else {
 				opt = optionFromShort(r)
 				if opt == nil {
 					return fmt.Errorf("unknown option: %q", r)
 				}
-				switch want := opt.NextState(); want {
+				switch next := opt.NextState(); next {
 				case wantBool:
-					state = wantShortOptionName
 					*opt.(*optionBool).pv = true
 					argsProcessed++
+					state = wantShortOptionName
 				default:
-					state = ignorePossibleSpace
-					stateAfterPossibleSpace = want
 					optionValue = ""
+					state = ignorePossibleSpace
+					stateAfterPossibleSpace = next
 				}
 			}
 
 		case wantShortOptionName:
-			if unicode.IsSpace(r) {
-				argIndex++
+			if isSpace {
 				state = anything
 			} else if r == '-' {
 				return fmt.Errorf("cannot parse argument: %q", os.Args[argIndex])
@@ -153,7 +155,7 @@ func parse(line string) error {
 				if opt == nil {
 					return fmt.Errorf("unknown option: %q", r)
 				}
-				switch want := opt.NextState(); want {
+				switch next := opt.NextState(); next {
 				case wantBool:
 					*opt.(*optionBool).pv = true
 					argsProcessed++
@@ -163,130 +165,114 @@ func parse(line string) error {
 			}
 
 		case wantLongOptionName:
-			// read in option name, all runes until next space
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
-				// If space after double hyphens, then stop parsing command line arguments
+			if isSpace {
 				if longOptionName == "" {
+					// NOTE: equivalent to reading double hyphen followed by
+					// space: done processing args
 					return nil
-				} else {
-					opt = optionFromLong(longOptionName)
-					if opt == nil {
-						return fmt.Errorf("unknown option: %q", longOptionName)
-					}
-					switch want := opt.NextState(); want {
-					case wantBool:
-						*opt.(*optionBool).pv = true
-						argsProcessed++
-					default:
-						state = ignorePossibleSpace
-						stateAfterPossibleSpace = want
-						optionValue = ""
-					}
+				}
+
+				opt = optionFromLong(longOptionName)
+				if opt == nil {
+					return fmt.Errorf("unknown option: %q", longOptionName)
+				}
+				switch next := opt.NextState(); next {
+				case wantBool:
+					*opt.(*optionBool).pv = true
+					argsProcessed++
+					state = anything
+				default:
+					optionValue = ""
+					state = ignorePossibleSpace
+					stateAfterPossibleSpace = next
 				}
 			} else {
 				longOptionName += string(r)
 			}
 
 		case wantDuration:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				value, err := time.ParseDuration(optionValue)
 				if err != nil {
 					return err
 				}
 				*opt.(*optionDuration).pv = value
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
 
 		case wantFloat:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				value, err := strconv.ParseFloat(optionValue, 64)
 				if err != nil {
 					return err
 				}
 				*opt.(*optionFloat).pv = value
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
 
 		case wantInt:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				value, err := strconv.ParseInt(optionValue, 10, 64)
 				if err != nil {
 					return err
 				}
 				*opt.(*optionInt).pv = int(value)
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
 
 		case wantInt64:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				value, err := strconv.ParseInt(optionValue, 10, 64)
 				if err != nil {
 					return err
 				}
 				*opt.(*optionInt64).pv = value
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
 
 		case wantUint:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				value, err := strconv.ParseUint(optionValue, 10, 64)
 				if err != nil {
 					return err
 				}
 				*opt.(*optionUint).pv = uint(value)
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
 
 		case wantUint64:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				value, err := strconv.ParseUint(optionValue, 10, 64)
 				if err != nil {
 					return err
 				}
 				*opt.(*optionUint64).pv = value
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
 
 		case wantString:
-			if unicode.IsSpace(r) {
-				argIndex++
-				state = anything
-
+			if isSpace {
 				*opt.(*optionString).pv = optionValue
 				argsProcessed++
+				state = anything
 			} else {
 				optionValue += string(r)
 			}
@@ -314,7 +300,7 @@ func parse(line string) error {
 		if opt == nil {
 			return fmt.Errorf("unknown option: %q", longOptionName)
 		}
-		switch want := opt.NextState(); want {
+		switch next := opt.NextState(); next {
 		case wantBool:
 			*opt.(*optionBool).pv = true
 			argsProcessed++
