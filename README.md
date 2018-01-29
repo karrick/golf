@@ -12,12 +12,13 @@ request you use a DSL for describing your command line program. It
 merely allows you to specify which options your program accepts, and
 provides the values to your program based on the user's arguments.
 
-golf is 
-
 ## Usage Example
 
 Use is nearly identical to the standard library flag package. The main
-difference is the ability to use both short and long option names.
+difference is the ability to use both short and long option names. You
+may use either short, long, or both command line option flags for each
+option you define. To omit either the short or the long flags, simply
+use the empty string as its value.
 
 ```Go
     optHelp := golf.Bool("h", "help", false, "Display command line help and exit")
