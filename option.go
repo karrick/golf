@@ -103,6 +103,11 @@ func Bool(short, long string, value bool, description string) *bool {
 	return &v
 }
 
+// BoolVar binds an existing boolean variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func BoolVar(pv *bool, short, long string, value bool, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -143,6 +148,11 @@ func Duration(short, long string, value time.Duration, description string) *time
 	return &v
 }
 
+// DurationVar binds an existing time.Duration variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func DurationVar(pv *time.Duration, short, long string, value time.Duration, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -183,6 +193,11 @@ func Float(short, long string, value float64, description string) *float64 {
 	return &v
 }
 
+// FloatVar binds an existing float64 variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func FloatVar(pv *float64, short, long string, value float64, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -223,6 +238,11 @@ func Int(short, long string, value int, description string) *int {
 	return &v
 }
 
+// IntVar binds an existing int variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func IntVar(pv *int, short, long string, value int, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -263,6 +283,11 @@ func Int64(short, long string, value int64, description string) *int64 {
 	return &v
 }
 
+// Int64Var binds an existing int64 variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func Int64Var(pv *int64, short, long string, value int64, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -303,6 +328,11 @@ func Uint(short, long string, value uint, description string) *uint {
 	return &v
 }
 
+// UintVar binds an existing uint variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func UintVar(pv *uint, short, long string, value uint, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -343,6 +373,11 @@ func Uint64(short, long string, value uint64, description string) *uint64 {
 	return &v
 }
 
+// Uint64Var binds an existing uint64 variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func Uint64Var(pv *uint64, short, long string, value uint64, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
@@ -383,6 +418,11 @@ func String(short, long string, value string, description string) *string {
 	return &v
 }
 
+// StringVar binds an existing string variable to a flag.
+//
+// While invoking panic is never a good idea from a library, neither is calling
+// log.Fatal, however, the flag API from the standard library being emulated
+// does not allow for returning an error.
 func StringVar(pv *string, short, long string, value string, description string) {
 	r, err := parseAndCheckFlags(short, long)
 	if err != nil {
