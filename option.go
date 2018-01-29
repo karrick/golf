@@ -34,13 +34,35 @@ func optionFromShort(short rune) option {
 	return nil
 }
 
-func redefinition(short rune, long string) error {
+func parseAndCheckFlags(short, long string) (rune, error) {
 	var r rune
+	if short == "" && long == "" {
+		return r, errors.New("cannot add option without either short, long, or both flags")
+	}
+	if short != "" {
+		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
+			return r, fmt.Errorf("cannot decode first rune of short flag: %q", short)
+		}
+		if r == '-' {
+			return r, fmt.Errorf("cannot set short flag to a hyphen: %q", short)
+		}
+	}
+	if strings.HasPrefix(long, "-") {
+		return r, fmt.Errorf("cannot start long flag with a hyphen: %q", long)
+	}
+	if err := redefinition(r, long); err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
+func redefinition(short rune, long string) error {
+	var zeroValue rune
 	for _, opt := range options {
 		if long != "" && long == opt.Long() {
 			return fmt.Errorf("cannot add option that duplicates long flag: %q", long)
 		}
-		if short != r && short == opt.Short() {
+		if short != zeroValue && short == opt.Short() {
 			return fmt.Errorf("cannot add option that duplicates short flag: %q", short)
 		}
 	}
@@ -75,22 +97,8 @@ func (o optionBool) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Bool(short, long string, value bool, description string) *bool {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionBool{
@@ -123,22 +131,8 @@ func (o optionDuration) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Duration(short, long string, value time.Duration, description string) *time.Duration {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionDuration{
@@ -171,22 +165,8 @@ func (o optionFloat) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Float(short, long string, value float64, description string) *float64 {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionFloat{
@@ -219,22 +199,8 @@ func (o optionInt) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Int(short, long string, value int, description string) *int {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionInt{
@@ -267,22 +233,8 @@ func (o optionInt64) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Int64(short, long string, value int64, description string) *int64 {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionInt64{
@@ -315,22 +267,8 @@ func (o optionUint) Short() rune            { return o.short }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Uint(short, long string, value uint, description string) *uint {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionUint{
@@ -363,22 +301,8 @@ func (o optionUint64) NextState() parserState { return wantUint64 }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func Uint64(short, long string, value uint64, description string) *uint64 {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionUint64{
@@ -411,22 +335,8 @@ func (o optionString) NextState() parserState { return wantString }
 // log.Fatal, however, the flag API from the standard library being emulated
 // does not allow for returning an error.
 func String(short, long string, value string, description string) *string {
-	var r rune
-	if short == "" && long == "" {
-		panic(errors.New("cannot add option without either short, long, or both flags"))
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			panic(fmt.Errorf("cannot decode first rune of short flag: %q", short))
-		}
-		if r == '-' {
-			panic(fmt.Errorf("cannot start short flag with a hyphen: %q", short))
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Errorf("cannot start long flag with a hyphen: %q", long))
-	}
-	if err := redefinition(r, long); err != nil {
+	r, err := parseAndCheckFlags(short, long)
+	if err != nil {
 		panic(err)
 	}
 	o := &optionString{

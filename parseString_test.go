@@ -8,7 +8,7 @@ func TestStringInvalid(t *testing.T) {
 	ensurePanic(t, "cannot add option without either short, long, or both flags", func() {
 		_ = String("", "", "", "some example flag")
 	})
-	ensurePanic(t, "cannot start short flag with a hyphen: \"-e\"", func() {
+	ensurePanic(t, "cannot set short flag to a hyphen: \"-e\"", func() {
 		_ = String("-e", "example", "", "some example flag")
 	})
 	ensurePanic(t, "cannot start long flag with a hyphen: \"--example\"", func() {
