@@ -73,8 +73,6 @@ func TestParseComplex(t *testing.T) {
 	// }
 }
 
-// TODO: test for `--` to stop parsing
-
 func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	resetParser()
 
@@ -151,5 +149,65 @@ func TestPanicsWhenAttemptToRedefineFlag(t *testing.T) {
 		resetParser()
 		_ = Uint("f", "flubber", 0, "some example flag")
 		_ = Uint("b", "flubber", 0, "some example flag")
+	})
+}
+
+func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
+	t.Run("with intervening space", func(t *testing.T) {
+		resetParser()
+
+		a := Int("a", "alpha", 0, "some integer")
+		b := Bool("b", "bravo", false, "some bool")
+		c := String("c", "charlie", "", "some string")
+		d := Bool("d", "delta", false, "some bool")
+
+		if got, want := parse("-ba 13 -c foo"), error(nil); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *a, 13; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *b, true; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *c, "foo"; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *d, false; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
+
+	t.Run("without intervening space", func(t *testing.T) {
+		resetParser()
+
+		a := Int("a", "alpha", 0, "some integer")
+		b := Bool("b", "bravo", false, "some bool")
+		c := String("c", "charlie", "", "some string")
+		d := Bool("d", "delta", false, "some bool")
+
+		if got, want := parse("-ba13 -c foo"), error(nil); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *a, 13; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *b, true; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *c, "foo"; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := *d, false; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 }

@@ -23,29 +23,37 @@ controlling the same variable. Likewise, golf does not require a space
 between the short letter flag and its argument. For instance, all of
 the following are equivalent:
 
-    example -t3.14
-    example -t 3.14
-    example --threshold 3.14
+    $ example -t3.14
+    $ example -t 3.14
+    $ example --threshold 3.14
 
 golf does allow boolean options to be grouped together when using
 their single letter equivalents, such as common in many UNIX
 programs. Assuming "-l" and "--limit" point to the same option, all of
 the following are equivalent:
 
-    example -va -t 4 -shost.example.com
-    example -va -t4 -s host.example.com
-    example -va --threshold 4 --server host.example.com
-    example -v -a --threshold 4 --server host.example.com
+    $ example -va -t 4 -shost.example.com
+    $ example -va -t4 -s host.example.com
+    $ example -va --threshold 4 --server host.example.com
+    $ example -v -a --threshold 4 --server host.example.com
 
-To prevent ambiguities, however, golf does not allow mixing boolean
-short flags and short flags that require an argument in the same
-parameters. The following would result in error messages.
-
-    $ example -t4v
-    ERROR: cannot parse argument: "-t4v"
+golf does allow mixing boolean short flags and short flags that
+require an argument in the same parameter when the flag that requires
+an argument is the last flag in the parameter. Both of the following
+are legal, although the second example happens to parse oddly in my
+brain, because v and t appear grouped closer than the t and
+the 4. Nevertheless, both are equivalent and unambiguous:
 
     $ example -vt4
-    ERROR: cannot parse argument: "-vt4"
+    $ example -vt 4
+
+To prevent ambiguities, however, golf does not allow placing any
+additional flags after a flag that requires an argument, even if it
+may appear to be legal. For instance, if the i takes an integer and
+the s flag takes a string, this will still result in a parsing error:
+
+    $ example -i4sa
+    ERROR: cannot parse argument: "-i4sa"
 
 ## Usage Example
 

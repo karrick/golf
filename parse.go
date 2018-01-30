@@ -160,7 +160,9 @@ func parse(line string) error {
 					*opt.(*optionBool).pv = true
 					argsProcessed++
 				default:
-					return fmt.Errorf("cannot parse argument: %q", os.Args[argIndex])
+					optionValue = ""
+					state = ignorePossibleSpace
+					stateAfterPossibleSpace = next
 				}
 			}
 
