@@ -13,11 +13,19 @@ program. It merely allows you to specify which options your program
 accepts, and provides the values to your program based on the user's
 arguments.
 
-golf does not require a space between the short letter flag equivalent
-and its argument. For instance, both of the following are equivalent:
+* Fully POSIX-compliant flags, including short & long flags.
+* Helpful functions for printing help and usage information.
+* Optional space between short flag and its argument.
+* No new concepts to learn beyond typical use of flag library.
+
+golf allows definition of short and long flag names for the same flag,
+controlling the same variable. Likewise, golf does not require a space
+between the short letter flag and its argument. For instance, all of
+the following are equivalent:
 
     example -t3.14
     example -t 3.14
+    example --threshold 3.14
 
 golf does allow boolean options to be grouped together when using
 their single letter equivalents, such as common in many UNIX
