@@ -53,7 +53,7 @@ may appear to be legal. For instance, if the i takes an integer and
 the s flag takes a string, this will still result in a parsing error:
 
     $ example -i4sa
-    ERROR: cannot parse argument: "-i4sa"
+    ERROR: strconv.ParseInt: parsing "4sa": invalid syntax
 
 ## Usage Example
 
