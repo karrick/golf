@@ -8,13 +8,13 @@ import (
 	"unicode/utf8"
 )
 
-var options []option
+var flags []option
 
-// optionFromLong performs linear search for the option with a matching long
-// option name in the list of options. It returns the option found, or nil if
-// the requested long option name was not found.
-func optionFromLong(long string) option {
-	for _, option := range options {
+// flagFromLongName performs linear search for the flag with a matching long
+// flag name in the list of flags. It returns the flag found, or nil if the
+// requested long flag name was not found.
+func flagFromLongName(long string) option {
+	for _, option := range flags {
 		if option.Long() == long {
 			return option
 		}
@@ -22,11 +22,11 @@ func optionFromLong(long string) option {
 	return nil
 }
 
-// optionFromShort performs linear search for the option with a matching short
-// option name in the list of options. It returns the option found, or nil if
-// the requested short option name was not found.
-func optionFromShort(short rune) option {
-	for _, option := range options {
+// flagFromShortName performs linear search for the flag with a matching short
+// flag name in the list of flags. It returns the flag found, or nil if the
+// requested short flag name was not found.
+func flagFromShortName(short rune) option {
+	for _, option := range flags {
 		if option.Short() == short {
 			return option
 		}
@@ -34,42 +34,78 @@ func optionFromShort(short rune) option {
 	return nil
 }
 
-func parseAndCheckFlags(short, long string) (rune, error) {
-	var r rune
-	if short == "" && long == "" {
-		return r, errors.New("cannot add option without either short, long, or both flags")
-	}
-	if short != "" {
-		if r, _ = utf8.DecodeRuneInString(short); r == utf8.RuneError {
-			return r, fmt.Errorf("cannot decode first rune of short flag: %q", short)
-		}
-		if r == '-' {
-			return r, fmt.Errorf("cannot set short flag to a hyphen: %q", short)
-		}
-	}
-	if strings.HasPrefix(long, "-") {
-		return r, fmt.Errorf("cannot start long flag with a hyphen: %q", long)
-	}
-	if err := redefinition(r, long); err != nil {
-		return r, err
-	}
-	return r, nil
-}
-
+// redefinition ensures the specified short and long flags do not redefine any
+// existing flag definitions.
 func redefinition(short rune, long string) error {
-	var zeroValue rune
-	for _, opt := range options {
+	for _, opt := range flags {
 		if long != "" && long == opt.Long() {
 			return fmt.Errorf("cannot add option that duplicates long flag: %q", long)
 		}
-		if short != zeroValue && short == opt.Short() {
+		if short != utf8.RuneError && short == opt.Short() {
 			return fmt.Errorf("cannot add option that duplicates short flag: %q", short)
 		}
 	}
 	return nil
 }
 
-// option is list of methods any concrete option needs to have for use by parser.
+// parseShortAndLongFlag is called when there is both a short and a long flag to
+// validate and ensure there are no duplicates.
+func parseShortAndLongFlag(short rune, long string) error {
+
+	switch short {
+	case utf8.RuneError:
+		return fmt.Errorf("cannot use flag with invalid rune: %q", short)
+	case '-':
+		return fmt.Errorf("cannot use hyphen as a flag: %q", short)
+	}
+
+	switch {
+	case long == "":
+		return errors.New("cannot use empty flag string")
+	case strings.HasPrefix(long, "-"):
+		return fmt.Errorf("cannot use flag that starts with a hyphen: %q", long)
+	}
+
+	return redefinition(short, long)
+}
+
+// parseSingleFlag is called when there is a single flag, and it is not known
+// whether the flag is short or long. If validates the flag and ensures it is
+// not a duplicate.
+func parseSingleFlag(flag string) (rune, string, error) {
+	if flag == "" {
+		return utf8.RuneError, "", errors.New("cannot use empty flag string")
+	}
+
+	var firstRune rune
+	var bufIndex, runeCount int
+
+	// Ensure all bytes are valid runes
+	buf := []byte(flag)
+
+	for bufIndex < len(buf) {
+		thisRune, runeSize := utf8.DecodeRune(buf[bufIndex:])
+		if thisRune == utf8.RuneError {
+			return thisRune, "", fmt.Errorf("cannot use flag with invalid rune: %q", flag)
+		}
+		if runeCount == 0 {
+			if thisRune == '-' {
+				return thisRune, "", fmt.Errorf("cannot use flag that starts with a hyphen: %q", flag)
+			}
+			firstRune = thisRune
+		}
+		runeCount++
+		bufIndex += runeSize
+	}
+
+	if runeCount == 1 {
+		return firstRune, "", redefinition(firstRune, "")
+	}
+	return utf8.RuneError, flag, redefinition(utf8.RuneError, flag)
+}
+
+// option is list of methods any concrete option needs to have for use by
+// parser.
 type option interface {
 	Default() interface{}   // default value of command line option
 	Description() string    // describes the command line option
@@ -92,32 +128,50 @@ func (o optionBool) Long() string           { return o.long }
 func (o optionBool) NextState() parserState { return wantBool }
 func (o optionBool) Short() rune            { return o.short }
 
-// Bool returns a pointer to a bool command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Bool(short, long string, value bool, description string) *bool {
+// Bool returns a pointer to a bool command line option, allowing for either a
+// short or a long flag. If both are desired, use the BoolP function.
+func Bool(flag string, value bool, description string) *bool {
 	var v bool
-	BoolVar(&v, short, long, value, description)
+	BoolVar(&v, flag, value, description)
 	return &v
 }
 
-// BoolVar binds an existing boolean variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func BoolVar(pv *bool, short, long string, value bool, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// BoolVar binds an existing boolean variable to a flag, allowing for either a
+// short or a long flag. If both are desired, use the BoolVarP function.
+func BoolVar(pv *bool, flag string, value bool, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionBool{
+	flags = append(flags, &optionBool{
 		description: description,
 		long:        long,
-		short:       r,
+		short:       short,
+		pv:          pv,
+		def:         value,
+	})
+}
+
+// BoolP returns a pointer to a bool command line option, allowing for both a
+// short and a long flag.
+func BoolP(short rune, long string, value bool, description string) *bool {
+	var v bool
+	BoolVarP(&v, short, long, value, description)
+	return &v
+}
+
+// BoolVarP binds an existing boolean variable to a flag, allowing for both a
+// short and a long flag.
+func BoolVarP(pv *bool, short rune, long string, value bool, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionBool{
+		description: description,
+		long:        long,
+		short:       short,
 		pv:          pv,
 		def:         value,
 	})
@@ -137,32 +191,52 @@ func (o optionDuration) Long() string           { return o.long }
 func (o optionDuration) NextState() parserState { return wantDuration }
 func (o optionDuration) Short() rune            { return o.short }
 
-// Duration returns a pointer to a duration command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Duration(short, long string, value time.Duration, description string) *time.Duration {
+// Duration returns a pointer to a time.Duration command line option, allowing
+// for either a short or a long flag. If both are desired, use the DurationP
+// function.
+func Duration(flag string, value time.Duration, description string) *time.Duration {
 	var v time.Duration
-	DurationVar(&v, short, long, value, description)
+	DurationVar(&v, flag, value, description)
 	return &v
 }
 
-// DurationVar binds an existing time.Duration variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func DurationVar(pv *time.Duration, short, long string, value time.Duration, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// DurationVar binds an existing time.Duration variable to a flag, allowing for
+// either a short or a long flag. If both are desired, use the DurationVarP
+// function.
+func DurationVar(pv *time.Duration, flag string, value time.Duration, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionDuration{
+	flags = append(flags, &optionDuration{
 		description: description,
 		long:        long,
-		short:       r,
+		short:       short,
+		pv:          pv,
+		def:         value,
+	})
+}
+
+// DurationP returns a pointer to a time.Duration command line option, allowing
+// for both a short and a long flag.
+func DurationP(short rune, long string, value time.Duration, description string) *time.Duration {
+	var v time.Duration
+	DurationVarP(&v, short, long, value, description)
+	return &v
+}
+
+// DurationVarP binds an existing time.Duration variable to a flag, allowing for
+// both a short and a long flag.
+func DurationVarP(pv *time.Duration, short rune, long string, value time.Duration, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionDuration{
+		description: description,
+		long:        long,
+		short:       short,
 		pv:          pv,
 		def:         value,
 	})
@@ -182,34 +256,52 @@ func (o optionFloat) Long() string           { return o.long }
 func (o optionFloat) NextState() parserState { return wantFloat }
 func (o optionFloat) Short() rune            { return o.short }
 
-// Float returns a pointer to a float64 command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Float(short, long string, value float64, description string) *float64 {
+// Float returns a pointer to a float64 command line option, allowing for either
+// a short or a long flag. If both are desired, use the FloatP function.
+func Float(flag string, value float64, description string) *float64 {
 	var v float64
-	FloatVar(&v, short, long, value, description)
+	FloatVar(&v, flag, value, description)
 	return &v
 }
 
-// FloatVar binds an existing float64 variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func FloatVar(pv *float64, short, long string, value float64, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// FloatVar binds an existing float64 variable to a flag, allowing for either a
+// short or a long flag. If both are desired, use the FloatVarP function.
+func FloatVar(pv *float64, flag string, value float64, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionFloat{
+	flags = append(flags, &optionFloat{
 		description: description,
 		long:        long,
-		short:       r,
-		def:         value,
+		short:       short,
 		pv:          pv,
+		def:         value,
+	})
+}
+
+// FloatP returns a pointer to a float64 command line option, allowing for both
+// a short and a long flag.
+func FloatP(short rune, long string, value float64, description string) *float64 {
+	var v float64
+	FloatVarP(&v, short, long, value, description)
+	return &v
+}
+
+// FloatVarP binds an existing float64 variable to a flag, allowing for both a
+// short and a long flag.
+func FloatVarP(pv *float64, short rune, long string, value float64, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionFloat{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          pv,
+		def:         value,
 	})
 }
 
@@ -227,34 +319,52 @@ func (o optionInt) Long() string           { return o.long }
 func (o optionInt) NextState() parserState { return wantInt }
 func (o optionInt) Short() rune            { return o.short }
 
-// Int returns a pointer to an int command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Int(short, long string, value int, description string) *int {
+// Int returns a pointer to a int command line option, allowing for either a
+// short or a long flag. If both are desired, use the IntP function.
+func Int(flag string, value int, description string) *int {
 	var v int
-	IntVar(&v, short, long, value, description)
+	IntVar(&v, flag, value, description)
 	return &v
 }
 
-// IntVar binds an existing int variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func IntVar(pv *int, short, long string, value int, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// IntVar binds an existing int variable to a flag, allowing for either a short
+// or a long flag. If both are desired, use the IntVarP function.
+func IntVar(pv *int, flag string, value int, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionInt{
+	flags = append(flags, &optionInt{
 		description: description,
 		long:        long,
-		short:       r,
-		def:         value,
+		short:       short,
 		pv:          pv,
+		def:         value,
+	})
+}
+
+// IntP returns a pointer to a int command line option, allowing for both a
+// short and a long flag.
+func IntP(short rune, long string, value int, description string) *int {
+	var v int
+	IntVarP(&v, short, long, value, description)
+	return &v
+}
+
+// IntVarP binds an existing int variable to a flag, allowing for both a short
+// and a long flag.
+func IntVarP(pv *int, short rune, long string, value int, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionInt{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          pv,
+		def:         value,
 	})
 }
 
@@ -272,34 +382,52 @@ func (o optionInt64) Long() string           { return o.long }
 func (o optionInt64) NextState() parserState { return wantInt64 }
 func (o optionInt64) Short() rune            { return o.short }
 
-// Int64 returns a pointer to an int64 command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Int64(short, long string, value int64, description string) *int64 {
+// Int64 returns a pointer to a int64 command line option, allowing for either a
+// short or a long flag. If both are desired, use the Int64P function.
+func Int64(flag string, value int64, description string) *int64 {
 	var v int64
-	Int64Var(&v, short, long, value, description)
+	Int64Var(&v, flag, value, description)
 	return &v
 }
 
-// Int64Var binds an existing int64 variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Int64Var(pv *int64, short, long string, value int64, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// Int64Var binds an existing int64 variable to a flag, allowing for either a
+// short or a long flag. If both are desired, use the Int64VarP function.
+func Int64Var(pv *int64, flag string, value int64, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionInt64{
+	flags = append(flags, &optionInt64{
 		description: description,
 		long:        long,
-		short:       r,
-		def:         value,
+		short:       short,
 		pv:          pv,
+		def:         value,
+	})
+}
+
+// Int64P returns a pointer to a int64 command line option, allowing for both a
+// short and a long flag.
+func Int64P(short rune, long string, value int64, description string) *int64 {
+	var v int64
+	Int64VarP(&v, short, long, value, description)
+	return &v
+}
+
+// Int64VarP binds an existing int64 variable to a flag, allowing for both a
+// short and a long flag.
+func Int64VarP(pv *int64, short rune, long string, value int64, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionInt64{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          pv,
+		def:         value,
 	})
 }
 
@@ -317,34 +445,52 @@ func (o optionUint) Long() string           { return o.long }
 func (o optionUint) NextState() parserState { return wantUint }
 func (o optionUint) Short() rune            { return o.short }
 
-// Uint returns a pouinter to an uint command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Uint(short, long string, value uint, description string) *uint {
+// Uint returns a pouinter to a uint command line option, allowing for either a
+// short or a long flag. If both are desired, use the UintP function.
+func Uint(flag string, value uint, description string) *uint {
 	var v uint
-	UintVar(&v, short, long, value, description)
+	UintVar(&v, flag, value, description)
 	return &v
 }
 
-// UintVar binds an existing uint variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func UintVar(pv *uint, short, long string, value uint, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// UintVar binds an existing uint variable to a flag, allowing for either a short
+// or a long flag. If both are desired, use the UintVarP function.
+func UintVar(pv *uint, flag string, value uint, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionUint{
+	flags = append(flags, &optionUint{
 		description: description,
 		long:        long,
-		short:       r,
-		def:         value,
+		short:       short,
 		pv:          pv,
+		def:         value,
+	})
+}
+
+// UintP returns a pouinter to a uint command line option, allowing for both a
+// short and a long flag.
+func UintP(short rune, long string, value uint, description string) *uint {
+	var v uint
+	UintVarP(&v, short, long, value, description)
+	return &v
+}
+
+// UintVarP binds an existing uint variable to a flag, allowing for both a short
+// and a long flag.
+func UintVarP(pv *uint, short rune, long string, value uint, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionUint{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          pv,
+		def:         value,
 	})
 }
 
@@ -362,34 +508,52 @@ func (o optionUint64) Short() rune            { return o.short }
 func (o optionUint64) Long() string           { return o.long }
 func (o optionUint64) NextState() parserState { return wantUint64 }
 
-// Uint64 returns a pouinter to an uint64 command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Uint64(short, long string, value uint64, description string) *uint64 {
+// Uint64 returns a pointer to a uint64 command line option, allowing for either a
+// short or a long flag. If both are desired, use the Uint64P function.
+func Uint64(flag string, value uint64, description string) *uint64 {
 	var v uint64
-	Uint64Var(&v, short, long, value, description)
+	Uint64Var(&v, flag, value, description)
 	return &v
 }
 
-// Uint64Var binds an existing uint64 variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func Uint64Var(pv *uint64, short, long string, value uint64, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// Uint64Var binds an existing uint64 variable to a flag, allowing for either a
+// short or a long flag. If both are desired, use the Uint64VarP function.
+func Uint64Var(pv *uint64, flag string, value uint64, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionUint64{
+	flags = append(flags, &optionUint64{
 		description: description,
 		long:        long,
-		short:       r,
-		def:         value,
+		short:       short,
 		pv:          pv,
+		def:         value,
+	})
+}
+
+// Uint64P returns a pointer to a uint64 command line option, allowing for both a
+// short and a long flag.
+func Uint64P(short rune, long string, value uint64, description string) *uint64 {
+	var v uint64
+	Uint64VarP(&v, short, long, value, description)
+	return &v
+}
+
+// Uint64VarP binds an existing uint64 variable to a flag, allowing for both a
+// short and a long flag.
+func Uint64VarP(pv *uint64, short rune, long string, value uint64, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionUint64{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          pv,
+		def:         value,
 	})
 }
 
@@ -407,33 +571,51 @@ func (o optionString) Short() rune            { return o.short }
 func (o optionString) Long() string           { return o.long }
 func (o optionString) NextState() parserState { return wantString }
 
-// String returns a pointer to a string command line option.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func String(short, long string, value string, description string) *string {
+// String returns a postringer to a string command line option, allowing for either a
+// short or a long flag. If both are desired, use the StringP function.
+func String(flag string, value string, description string) *string {
 	var v string
-	StringVar(&v, short, long, value, description)
+	StringVar(&v, flag, value, description)
 	return &v
 }
 
-// StringVar binds an existing string variable to a flag.
-//
-// While invoking panic is never a good idea from a library, neither is calling
-// log.Fatal, however, the flag API from the standard library being emulated
-// does not allow for returning an error.
-func StringVar(pv *string, short, long string, value string, description string) {
-	r, err := parseAndCheckFlags(short, long)
+// StringVar binds an existing string variable to a flag, allowing for either a short
+// or a long flag. If both are desired, use the StringVarP function.
+func StringVar(pv *string, flag string, value string, description string) {
+	short, long, err := parseSingleFlag(flag)
 	if err != nil {
 		panic(err)
 	}
 	*pv = value
-	options = append(options, &optionString{
+	flags = append(flags, &optionString{
 		description: description,
 		long:        long,
-		short:       r,
-		def:         value,
+		short:       short,
 		pv:          pv,
+		def:         value,
+	})
+}
+
+// StringP returns a postringer to a string command line option, allowing for both a
+// short and a long flag.
+func StringP(short rune, long string, value string, description string) *string {
+	var v string
+	StringVarP(&v, short, long, value, description)
+	return &v
+}
+
+// StringVarP binds an existing string variable to a flag, allowing for both a short
+// and a long flag.
+func StringVarP(pv *string, short rune, long string, value string, description string) {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	*pv = value
+	flags = append(flags, &optionString{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          pv,
+		def:         value,
 	})
 }

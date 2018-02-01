@@ -18,31 +18,70 @@ arguments.
 * Optional space between short flag and its argument.
 * No new concepts to learn beyond typical use of flag library.
 
-golf allows definition of short and long flag names for the same flag,
-controlling the same variable. Likewise, golf does not require a space
-between the short letter flag and its argument. For instance, all of
-the following are equivalent:
+## Usage Example
 
-    $ example -t3.14
-    $ example -t 3.14
-    $ example --threshold 3.14
+Documentation is available via
+[![GoDoc](https://godoc.org/github.com/karrick/golf?status.svg)](https://godoc.org/github.com/karrick/golf).
 
-golf does allow boolean options to be grouped together when using
-their single letter equivalents, such as common in many UNIX
-programs. Assuming "-l" and "--limit" point to the same option, all of
-the following are equivalent:
+Basic usage is nearly identical to the standard library flag
+package. There are only a very small set of features this library does
+not support from the flag library. However, it provides all the
+functions that most command line programs would require.
 
-    $ example -va -t 4 -shost.example.com
-    $ example -va -t4 -s host.example.com
-    $ example -va --threshold 4 --server host.example.com
-    $ example -v -a --threshold 4 --server host.example.com
+golf is designed such that you can change every flag package prefix to
+golf, recompile your program, and be able to use more POSIX friendly
+command line options. Both Type and TypeVar style flag declarations
+are supported, as shown below:
 
-golf does allow mixing boolean short flags and short flags that
-require an argument in the same parameter when the flag that requires
-an argument is the last flag in the parameter. Both of the following
-are legal, although the second example happens to parse oddly in my
-brain, because v and t appear grouped closer than the t and
-the 4. Nevertheless, both are equivalent and unambiguous:
+```Go
+var optVerbose bool
+
+optLimit := golf.Int("limit", 0, "Limit output to specified number of lines")
+golf.BoolVar(&optVerbose, "v", false, "Display verbose output")
+
+golf.Parse()
+```
+
+When the flag package prefix is changed to golf, your program will
+require a single-hyphen when the flag name is one rune long, and a
+double-hyphen prefix when the flag is more than one rune long.
+
+    $ example -v --limit 3
+
+## Features
+
+golf allows specifying both a short and a long flag name by calling
+the same function stem but with a P suffix, as shown below.
+
+```Go
+optRaw := golf.BoolP("r", "raw", false, "Display raw output")
+optServer := golf.StringP("s", "server", "", "Send query to specified server")
+optTheshold := golf.FloatP("t", "threshold", 0, "Set minimum threshold")
+optVerbose := golf.BoolP("v", "verbose", false, "Display verbose output")
+golf.Parse()
+```
+
+All of the below examples result in the same flag values being set:
+
+    $ example -sfoo.example.com -t3.14
+    $ example -s foo.example.com -t 3.14
+    $ example --server foo.example.com --threshold 3.14
+
+golf allows boolean options to be grouped together when using their
+single letter equivalents, such as common in many UNIX programs. all
+of the following are equivalent:
+
+    $ example -rv -t 4 -shost.example.com
+    $ example -rv -t4 -s host.example.com
+    $ example -rv --threshold 4 --server host.example.com
+    $ example -v -r --threshold 4 --server host.example.com
+
+golf also allow concatenation of one or more boolean short flags with
+at most one short flag that requires an argument provided the flag
+that requires the argument is the last flag in the parameter. Both of
+the following are legal, although the second example happens to parse
+oddly in my brain, because v and t appear grouped closer than the t
+and the 4. Nevertheless, both are equivalent and unambiguous:
 
     $ example -vt4
     $ example -vt 4
@@ -52,41 +91,8 @@ additional flags after a flag that requires an argument, even if it
 may appear to be legal. For instance, if the i takes an integer and
 the s flag takes a string, this will still result in a parsing error:
 
-    $ example -i4sa
-    ERROR: strconv.ParseInt: parsing "4sa": invalid syntax
-
-## Usage Example
-
-Documentation is available via
-[![GoDoc](https://godoc.org/github.com/karrick/golf?status.svg)](https://godoc.org/github.com/karrick/golf).
-
-Use is nearly identical to the standard library flag package. The main
-difference is the ability to use both short and long option names. You
-may use either short, long, or both command line option flags for each
-option you define. To omit either the short or the long flags, simply
-use the empty string as its value.
-
-
-```Go
-optAbsolute := golf.Bool("a", "", true, "Display absolute values")
-optHelp := golf.Bool("h", "help", false, "Display command line help and exit")
-optLimit := golf.Int("l", "limit", 0, "Limit output to specified number of lines")
-optServer := golf.String("s", "server", "", "Send query to specified server")
-optTheshold := golf.Float("t", "threshold", 0, "Set minimum threshold")
-optVerbose := golf.Bool("v", "verbose", false, "Print verbose output to stderr and exit")
-optVersion := golf.Bool("V", "version", false, "Print version output to stderr and exit")
-
-golf.Parse()
-
-if *optHelp || *optVersion {
-    fmt.Fprintf(os.Stderr, "%s version %s\n", filepath.Base(os.Args[0]), versionString)
-    if *optHelp {
-        fmt.Fprintf(os.Stderr, "\tdemonstration program\n\n")
-        golf.Usage()
-    }
-    os.Exit(0)
-}
-```
+    $ example -i4sfoo.example.com
+    ERROR: strconv.ParseInt: parsing "4sfoo.example.com": invalid syntax
 
 In an attempt to be largely compatible with the flag library,
 specifying an option flag has no error return value, so attempting to
@@ -110,21 +116,21 @@ followed by the description and the default value for that flag.
 ```
 Usage of example:
   -h, --help
-	Display command line help and exit (default: false)
+    Display command line help and exit (default: false)
   -l, --limit int
-	Limit output to specified number of lines (default: 0)
+    Limit output to specified number of lines (default: 0)
   -q, --quiet
-	Do not print intermediate errors to stderr (default: false)
+    Do not print intermediate errors to stderr (default: false)
   -v, --verbose
-	Print verbose output to stderr and exit (default: false)
+    Print verbose output to stderr (default: false)
   -V, --version
-	Print version output to stderr and exit (default: false)
+    Print version output to stderr and exit (default: false)
   -s, --servers string
-	string with both (default: host1,host2)
+    Some string (default: host1,host2)
   -t string
-	string with short (default: host3,host4)
+    Another string (default: host3,host4)
   --flubbers string
-	string with long (default: host5)
+    Yet another string (default: host5)
 ```
 
 ## TODO

@@ -23,7 +23,7 @@ func init() {
 func resetParser() {
 	argsProcessed = 0
 	argIndex = 1
-	options = nil
+	flags = nil
 	parsed = false
 }
 
@@ -42,16 +42,17 @@ func Parse() {
 // parserState represents the possible states of the parser, implemented as a state machine.
 type parserState uint
 
+// String returns text representation of parser state.
 func (state parserState) String() string {
 	switch state {
 	case anything:
 		return "nothing"
 	case consumedSingleHyphen:
 		return "consumed single hyphen"
-	case wantShortOptionName:
-		return "want short option name"
-	case wantLongOptionName:
+	case wantLongFlagName:
 		return "want long option name"
+	case wantShortFlagName:
+		return "want short option name"
 	case ignorePossibleSpace:
 		return "ignore possible space"
 	case wantFloat:
@@ -71,7 +72,7 @@ func (state parserState) String() string {
 	case wantDuration:
 		return "want duration"
 	default:
-		return fmt.Sprintf("unknown state value: %d", int(state))
+		return fmt.Sprintf("unknown parser state value: %d", int(state))
 	}
 }
 
@@ -84,8 +85,8 @@ const (
 	wantFloat
 	wantInt
 	wantInt64
-	wantLongOptionName
-	wantShortOptionName
+	wantLongFlagName
+	wantShortFlagName
 	wantString
 	wantUint
 	wantUint64
@@ -93,11 +94,25 @@ const (
 
 func parse(line string) error {
 	var state, stateAfterPossibleSpace parserState
-	var longOptionName, optionValue string
-	var opt option
+	var longFlagName, flagText string
+	var f option
+	var escaped bool
 
 	for _, r := range line {
 		// fmt.Fprintf(os.Stderr, "state: %v; rune: %c\n", state, r)
+
+		if escaped {
+			escaped = false
+			switch state {
+			case wantDuration, wantFloat, wantInt, wantInt64, wantUint, wantUint64, wantString:
+				flagText += string(r)
+			}
+		}
+
+		if r == '\\' {
+			escaped = true
+			continue
+		}
 
 		isSpace := unicode.IsSpace(r)
 		if isSpace {
@@ -124,159 +139,159 @@ func parse(line string) error {
 
 		case consumedSingleHyphen:
 			if isSpace {
-				return errors.New("hyphen without options")
+				return errors.New("hyphen without flags")
 			} else if r == '-' {
-				longOptionName = ""
-				state = wantLongOptionName
+				longFlagName = ""
+				state = wantLongFlagName
 			} else {
-				opt = optionFromShort(r)
-				if opt == nil {
-					return fmt.Errorf("unknown option: %q", r)
+				f = flagFromShortName(r)
+				if f == nil {
+					return fmt.Errorf("unknown flag: %q", r)
 				}
-				switch next := opt.NextState(); next {
+				switch next := f.NextState(); next {
 				case wantBool:
-					*opt.(*optionBool).pv = true
+					*f.(*optionBool).pv = true
 					argsProcessed++
-					state = wantShortOptionName
+					state = wantShortFlagName
 				default:
-					optionValue = ""
+					flagText = ""
 					state = ignorePossibleSpace
 					stateAfterPossibleSpace = next
 				}
 			}
 
-		case wantShortOptionName:
+		case wantShortFlagName:
 			if isSpace {
 				state = anything
 			} else if r == '-' {
 				return fmt.Errorf("cannot parse argument: %q", os.Args[argIndex])
 			} else {
-				opt = optionFromShort(r)
-				if opt == nil {
-					return fmt.Errorf("unknown option: %q", r)
+				f = flagFromShortName(r)
+				if f == nil {
+					return fmt.Errorf("unknown flag: %q", r)
 				}
-				switch next := opt.NextState(); next {
+				switch next := f.NextState(); next {
 				case wantBool:
-					*opt.(*optionBool).pv = true
+					*f.(*optionBool).pv = true
 					argsProcessed++
 				default:
-					optionValue = ""
+					flagText = ""
 					state = ignorePossibleSpace
 					stateAfterPossibleSpace = next
 				}
 			}
 
-		case wantLongOptionName:
+		case wantLongFlagName:
 			if isSpace {
-				if longOptionName == "" {
+				if longFlagName == "" {
 					// NOTE: equivalent to reading double hyphen followed by
-					// space: done processing args
+					// space: done processing arguments
 					return nil
 				}
 
-				opt = optionFromLong(longOptionName)
-				if opt == nil {
-					return fmt.Errorf("unknown option: %q", longOptionName)
+				f = flagFromLongName(longFlagName)
+				if f == nil {
+					return fmt.Errorf("unknown flag: %q", longFlagName)
 				}
-				switch next := opt.NextState(); next {
+				switch next := f.NextState(); next {
 				case wantBool:
-					*opt.(*optionBool).pv = true
+					*f.(*optionBool).pv = true
 					argsProcessed++
 					state = anything
 				default:
-					optionValue = ""
+					flagText = ""
 					state = ignorePossibleSpace
 					stateAfterPossibleSpace = next
 				}
 			} else {
-				longOptionName += string(r)
+				longFlagName += string(r)
 			}
 
 		case wantDuration:
 			if isSpace {
-				value, err := time.ParseDuration(optionValue)
+				value, err := time.ParseDuration(flagText)
 				if err != nil {
 					return err
 				}
-				*opt.(*optionDuration).pv = value
+				*f.(*optionDuration).pv = value
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		case wantFloat:
 			if isSpace {
-				value, err := strconv.ParseFloat(optionValue, 64)
+				value, err := strconv.ParseFloat(flagText, 64)
 				if err != nil {
 					return err
 				}
-				*opt.(*optionFloat).pv = value
+				*f.(*optionFloat).pv = value
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		case wantInt:
 			if isSpace {
-				value, err := strconv.ParseInt(optionValue, 10, 64)
+				value, err := strconv.ParseInt(flagText, 10, 64)
 				if err != nil {
 					return err
 				}
-				*opt.(*optionInt).pv = int(value)
+				*f.(*optionInt).pv = int(value)
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		case wantInt64:
 			if isSpace {
-				value, err := strconv.ParseInt(optionValue, 10, 64)
+				value, err := strconv.ParseInt(flagText, 10, 64)
 				if err != nil {
 					return err
 				}
-				*opt.(*optionInt64).pv = value
+				*f.(*optionInt64).pv = value
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		case wantUint:
 			if isSpace {
-				value, err := strconv.ParseUint(optionValue, 10, 64)
+				value, err := strconv.ParseUint(flagText, 10, 64)
 				if err != nil {
 					return err
 				}
-				*opt.(*optionUint).pv = uint(value)
+				*f.(*optionUint).pv = uint(value)
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		case wantUint64:
 			if isSpace {
-				value, err := strconv.ParseUint(optionValue, 10, 64)
+				value, err := strconv.ParseUint(flagText, 10, 64)
 				if err != nil {
 					return err
 				}
-				*opt.(*optionUint64).pv = value
+				*f.(*optionUint64).pv = value
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		case wantString:
 			if isSpace {
-				*opt.(*optionString).pv = optionValue
+				*f.(*optionString).pv = flagText
 				argsProcessed++
 				state = anything
 			} else {
-				optionValue += string(r)
+				flagText += string(r)
 			}
 
 		}
@@ -288,92 +303,92 @@ func parse(line string) error {
 
 	// we might have hit the end of the command line while doing stuff
 	switch state {
-	case anything, wantShortOptionName:
+	case anything, wantShortFlagName:
 		// nothing left to do
 	case consumedSingleHyphen:
-		return errors.New("hyphen without options")
+		return errors.New("hyphen without flags")
 	case ignorePossibleSpace:
-		if long := opt.Long(); long != "" {
-			return fmt.Errorf("option requires argument: %q", long)
+		if long := f.Long(); long != "" {
+			return fmt.Errorf("flag requires argument: %q", long)
 		}
-		return fmt.Errorf("option requires argument: %q", opt.Short())
-	case wantLongOptionName:
-		opt = optionFromLong(longOptionName)
-		if opt == nil {
-			return fmt.Errorf("unknown option: %q", longOptionName)
+		return fmt.Errorf("flag requires argument: %q", f.Short())
+	case wantLongFlagName:
+		f = flagFromLongName(longFlagName)
+		if f == nil {
+			return fmt.Errorf("unknown flag: %q", longFlagName)
 		}
-		switch next := opt.NextState(); next {
+		switch next := f.NextState(); next {
 		case wantBool:
-			*opt.(*optionBool).pv = true
+			*f.(*optionBool).pv = true
 			argsProcessed++
 		default:
-			return fmt.Errorf("option requires argument: %q", longOptionName)
+			return fmt.Errorf("flag requires argument: %q", longFlagName)
 		}
 	case wantDuration:
-		if optionValue == "" {
-			return errors.New("option requires argument")
+		if flagText == "" {
+			return errors.New("flag requires argument")
 		}
-		value, err := time.ParseDuration(optionValue)
+		value, err := time.ParseDuration(flagText)
 		if err != nil {
 			return err
 		}
-		*opt.(*optionDuration).pv = value
+		*f.(*optionDuration).pv = value
 		argsProcessed++
 	case wantFloat:
-		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+		if flagText == "" {
+			return fmt.Errorf("flag requires argument")
 		}
-		value, err := strconv.ParseFloat(optionValue, 64)
+		value, err := strconv.ParseFloat(flagText, 64)
 		if err != nil {
 			return err
 		}
-		*opt.(*optionFloat).pv = value
+		*f.(*optionFloat).pv = value
 		argsProcessed++
 	case wantInt:
-		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+		if flagText == "" {
+			return fmt.Errorf("flag requires argument")
 		}
-		value, err := strconv.ParseInt(optionValue, 10, 64)
+		value, err := strconv.ParseInt(flagText, 10, 64)
 		if err != nil {
 			return err
 		}
-		*opt.(*optionInt).pv = int(value)
+		*f.(*optionInt).pv = int(value)
 		argsProcessed++
 	case wantInt64:
-		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+		if flagText == "" {
+			return fmt.Errorf("flag requires argument")
 		}
-		value, err := strconv.ParseInt(optionValue, 10, 64)
+		value, err := strconv.ParseInt(flagText, 10, 64)
 		if err != nil {
 			return err
 		}
-		*opt.(*optionInt64).pv = value
+		*f.(*optionInt64).pv = value
 		argsProcessed++
 	case wantUint:
-		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+		if flagText == "" {
+			return fmt.Errorf("flag requires argument")
 		}
-		value, err := strconv.ParseUint(optionValue, 10, 64)
+		value, err := strconv.ParseUint(flagText, 10, 64)
 		if err != nil {
 			return err
 		}
-		*opt.(*optionUint).pv = uint(value)
+		*f.(*optionUint).pv = uint(value)
 		argsProcessed++
 	case wantUint64:
-		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+		if flagText == "" {
+			return fmt.Errorf("flag requires argument")
 		}
-		value, err := strconv.ParseUint(optionValue, 10, 64)
+		value, err := strconv.ParseUint(flagText, 10, 64)
 		if err != nil {
 			return err
 		}
-		*opt.(*optionUint64).pv = value
+		*f.(*optionUint64).pv = value
 		argsProcessed++
 	case wantString:
-		if optionValue == "" {
-			return fmt.Errorf("option requires argument")
+		if flagText == "" {
+			return fmt.Errorf("flag requires argument")
 		}
-		*opt.(*optionString).pv = optionValue
+		*f.(*optionString).pv = flagText
 		argsProcessed++
 	default:
 		return fmt.Errorf("unexpected parser state: %v", state)

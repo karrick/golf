@@ -7,15 +7,14 @@ import (
 )
 
 func ensurePanic(t *testing.T, errorMessage string, f func()) {
-	t.Run(errorMessage, func(t *testing.T) {
-		defer func() {
-			r := recover()
-			if r == nil || r.(error).Error() != errorMessage {
-				t.Errorf("GOT: %v; WANT: %v", r, errorMessage)
-			}
-		}()
-		f()
-	})
+	t.Helper()
+	defer func() {
+		r := recover()
+		if r == nil || !strings.Contains(r.(error).Error(), errorMessage) {
+			t.Errorf("GOT: %v; WANT: %v", r, errorMessage)
+		}
+	}()
+	f()
 }
 
 func TestParseEmpty(t *testing.T) {
@@ -25,28 +24,30 @@ func TestParseEmpty(t *testing.T) {
 	}
 }
 
-func TestParseUnknownShortOption(t *testing.T) {
-	resetParser()
-	got, want := parse("-a"), errors.New("unknown option: 'a'")
-	if got == nil || got.Error() != want.Error() {
-		t.Errorf("GOT: %v; WANT: %v", got, want)
-	}
-}
+func TestParseUnknownOption(t *testing.T) {
+	t.Run("short", func(t *testing.T) {
+		resetParser()
+		got, want := parse("-a"), errors.New("unknown flag: 'a'")
+		if got == nil || got.Error() != want.Error() {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
 
-func TestParseUnknownLongOption(t *testing.T) {
-	resetParser()
-	got, want := parse("--version"), errors.New("unknown option: \"version\"")
-	if got == nil || got.Error() != want.Error() {
-		t.Errorf("GOT: %v; WANT: %v", got, want)
-	}
+	t.Run("long", func(t *testing.T) {
+		resetParser()
+		got, want := parse("--version"), errors.New("unknown flag: \"version\"")
+		if got == nil || got.Error() != want.Error() {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
 }
 
 func TestParseComplex(t *testing.T) {
 	resetParser()
 
-	a := Int("l", "limit", 0, "limit results")
-	b := Bool("v", "verbose", false, "print verbose info")
-	c := String("s", "servers", "", "ask servers")
+	a := IntP('l', "limit", 0, "limit results")
+	b := BoolP('v', "verbose", false, "print verbose info")
+	c := StringP('s', "servers", "", "ask servers")
 
 	if got, want := parse("-l 4 -v -s host1,host2 some other arguments"), error(nil); got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
@@ -76,8 +77,8 @@ func TestParseComplex(t *testing.T) {
 func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	resetParser()
 
-	a := Int("l", "limit", 0, "limit results")
-	b := Bool("v", "verbose", false, "print verbose info")
+	a := IntP('l', "limit", 0, "limit results")
+	b := BoolP('v', "verbose", false, "print verbose info")
 
 	if got, want := parse("-l4 -- --verbose some other arguments"), error(nil); got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
@@ -93,15 +94,15 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 }
 
 func TestParseConfused(t *testing.T) {
+	// ??? It would be nice to test for exact string match to automate ensuring
+	// proper argument is returned in the error message.
 	t.Skip("only works with long command line")
 
 	resetParser()
 
-	a := Int("l", "limit", 0, "limit results")
-	b := Bool("v", "verbose", false, "print verbose info")
+	a := IntP('l', "limit", 0, "limit results")
+	b := BoolP('v', "verbose", false, "print verbose info")
 
-	// ??? It would be nice to test for exact string match to automate ensuring
-	// proper argument is returned in the error message.
 	if got, want := parse("-vl"), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
@@ -116,15 +117,15 @@ func TestParseConfused(t *testing.T) {
 }
 
 func TestParseHyphenAfterShort(t *testing.T) {
+	// ??? It would be nice to test for exact string match to automate ensuring
+	// proper argument is returned in the error message.
 	t.Skip("only works with long command line")
 
 	resetParser()
 
-	a := Int("l", "limit", 0, "limit results")
-	b := Bool("v", "verbose", false, "print verbose info")
+	a := IntP('l', "limit", 0, "limit results")
+	b := BoolP('v', "verbose", false, "print verbose info")
 
-	// ??? It would be nice to test for exact string match to automate ensuring
-	// proper argument is returned in the error message.
 	if got, want := parse("-v-l"), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
@@ -141,14 +142,14 @@ func TestParseHyphenAfterShort(t *testing.T) {
 func TestPanicsWhenAttemptToRedefineFlag(t *testing.T) {
 	ensurePanic(t, "cannot add option that duplicates short flag: 'f'", func() {
 		resetParser()
-		_ = Uint("f", "flubber", 0, "some example flag")
-		_ = Uint("f", "blubber", 0, "some example flag")
+		_ = UintP('f', "flubber", 0, "some example flag")
+		_ = UintP('f', "blubber", 0, "some example flag")
 	})
 
 	ensurePanic(t, "cannot add option that duplicates long flag: \"flubber\"", func() {
 		resetParser()
-		_ = Uint("f", "flubber", 0, "some example flag")
-		_ = Uint("b", "flubber", 0, "some example flag")
+		_ = UintP('f', "flubber", 0, "some example flag")
+		_ = UintP('b', "flubber", 0, "some example flag")
 	})
 }
 
@@ -156,10 +157,10 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 	t.Run("with intervening space", func(t *testing.T) {
 		resetParser()
 
-		a := Int("a", "alpha", 0, "some integer")
-		b := Bool("b", "bravo", false, "some bool")
-		c := String("c", "charlie", "", "some string")
-		d := Bool("d", "delta", false, "some bool")
+		a := IntP('a', "alpha", 0, "some integer")
+		b := BoolP('b', "bravo", false, "some bool")
+		c := StringP('c', "charlie", "", "some string")
+		d := BoolP('d', "delta", false, "some bool")
 
 		if got, want := parse("-ba 13 -c foo"), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
@@ -185,10 +186,10 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 	t.Run("without intervening space", func(t *testing.T) {
 		resetParser()
 
-		a := Int("a", "alpha", 0, "some integer")
-		b := Bool("b", "bravo", false, "some bool")
-		c := String("c", "charlie", "", "some string")
-		d := Bool("d", "delta", false, "some bool")
+		a := IntP('a', "alpha", 0, "some integer")
+		b := BoolP('b', "bravo", false, "some bool")
+		c := StringP('c', "charlie", "", "some string")
+		d := BoolP('d', "delta", false, "some bool")
 
 		if got, want := parse("-ba13 -c foo"), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)

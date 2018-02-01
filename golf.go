@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"unicode/utf8"
 )
 
-// Arg returns the i'th command-line argument. Arg(0) is the first
-// remaining argument after flags have been processed. Arg returns an empty
-// string if the requested element does not exist.
+// Arg returns the i'th command-line argument. Arg(0) is the first remaining
+// argument after flags have been processed. Arg returns an empty string if the
+// requested element does not exist.
 func Arg(i int) string {
 	n := argIndex + i
 	if n > len(os.Args)-1 {
@@ -36,8 +37,7 @@ func NFlag() int {
 // PrintDefaults prints to standard error, a usage message showing the default
 // settings of all defined command-line flags.
 func PrintDefaults() {
-	var r rune
-	for _, opt := range options {
+	for _, opt := range flags {
 		var typeName string
 		description := opt.Description()
 		value := opt.Default()
@@ -52,7 +52,7 @@ func PrintDefaults() {
 		short := opt.Short()
 		long := opt.Long()
 
-		if short != r {
+		if short != utf8.RuneError {
 			if long != "" {
 				fmt.Fprintf(os.Stderr, "  -%c, --%s%s\n", short, long, typeName)
 			} else {
