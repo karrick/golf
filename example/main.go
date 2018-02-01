@@ -12,22 +12,22 @@ import (
 var VersionString = "1.2.3"
 
 func main() {
-	optHelp := golf.Bool("h", "help", false, "Display command line help and exit")
-	optLimit := golf.Int("l", "limit", 0, "Limit output to specified number of lines")
-	optQuiet := golf.Bool("q", "quiet", false, "Do not print intermediate errors to stderr")
-	optVerbose := golf.Bool("v", "verbose", false, "Print verbose output to stderr and exit")
-	optVersion := golf.Bool("V", "version", false, "Print version output to stderr and exit")
+	optHelp := golf.BoolP('h', "help", false, "Display command line help and exit")
+	optLimit := golf.IntP('l', "limit", 0, "Limit output to specified number of lines")
+	optQuiet := golf.BoolP('q', "quiet", false, "Do not print intermediate errors to stderr")
+	optVerbose := golf.BoolP('v', "verbose", false, "Print verbose output to stderr")
+	optVersion := golf.BoolP('V', "version", false, "Print version to stderr and exit")
 
-	_ = golf.String("s", "servers", "host1,host2", "string with both")
-	_ = golf.String("t", "", "host3,host4", "string with short")
-	_ = golf.String("", "flubbers", "host5", "string with long")
+	_ = golf.StringP('s', "servers", "host1,host2", "Some string")
+	_ = golf.String("t", "host3,host4", "Another string")
+	_ = golf.String("flubbers", "host5", "Yet another string")
 
 	golf.Parse()
 
 	if *optHelp || *optVersion {
 		fmt.Fprintf(os.Stderr, "%s version %s\n", filepath.Base(os.Args[0]), VersionString)
 		if *optHelp {
-			fmt.Fprintf(os.Stderr, "\texample program\n\n")
+			fmt.Fprintf(os.Stderr, "\texample program to demonstrate library usage\n\n")
 			golf.Usage()
 		}
 		os.Exit(0)

@@ -114,23 +114,26 @@ On a separate line after each flag is printed a tab character,
 followed by the description and the default value for that flag.
 
 ```
+example version 1.2.3
+	example program
+
 Usage of example:
   -h, --help
-    Display command line help and exit (default: false)
+	Display command line help and exit (default: false)
   -l, --limit int
-    Limit output to specified number of lines (default: 0)
+	Limit output to specified number of lines (default: 0)
   -q, --quiet
-    Do not print intermediate errors to stderr (default: false)
+	Do not print intermediate errors to stderr (default: false)
   -v, --verbose
-    Print verbose output to stderr (default: false)
+	Print verbose output to stderr (default: false)
   -V, --version
-    Print version output to stderr and exit (default: false)
+	Print version to stderr and exit (default: false)
   -s, --servers string
-    Some string (default: host1,host2)
+	Some string (default: host1,host2)
   -t string
-    Another string (default: host3,host4)
+	Another string (default: host3,host4)
   --flubbers string
-    Yet another string (default: host5)
+	Yet another string (default: host5)
 ```
 
 ## TODO
