@@ -23,7 +23,7 @@ func TestParseUint64MissingArgument(t *testing.T) {
 		a := Uint64("t", 0, "little")
 		b := Uint64("T", 0, "big")
 
-		if got, want := parse("-t"), "flag requires argument: 't'"; got.Error() != want {
+		if got, want := parseArgs([]string{"-t"}), "flag requires argument: 't'"; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -41,7 +41,7 @@ func TestParseUint64MissingArgument(t *testing.T) {
 		a := Uint64("little", 0, "little")
 		b := Uint64("big", 0, "big")
 
-		if got, want := parse("--little"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -61,7 +61,7 @@ func TestParseUint64ShortOption(t *testing.T) {
 		a := Uint64("t", 0, "little")
 		b := Uint64("T", 0, "big")
 
-		if got, want := parse("-t 13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t", "13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -79,7 +79,7 @@ func TestParseUint64ShortOption(t *testing.T) {
 		a := Uint64("t", 0, "little")
 		b := Uint64("T", 0, "big")
 
-		if got, want := parse("-t13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -97,7 +97,7 @@ func TestParseUint64ShortOption(t *testing.T) {
 		a := Uint64("t", 0, "little")
 		b := Uint64("T", 0, "big")
 
-		if got, want := parse("-t13 -T42"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t13", "-T42"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -115,7 +115,7 @@ func TestParseUint64ShortOption(t *testing.T) {
 		a := Uint64("t", 0, "little")
 		b := Uint64("T", 0, "big")
 
-		if got, want := parse("-T 42 -t 13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T", "42", "-t", "13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -133,7 +133,7 @@ func TestParseUint64ShortOption(t *testing.T) {
 		a := Uint64("t", 0, "little")
 		b := Uint64("T", 0, "big")
 
-		if got, want := parse("-T42 -t13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T42", "-t13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -153,7 +153,7 @@ func TestParseUint64LongOption(t *testing.T) {
 		a := Uint64("little", 0, "little")
 		b := Uint64("big", 0, "big")
 
-		if got, want := parse("--little 13 --big 42"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--little", "13", "--big", "42"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -171,7 +171,7 @@ func TestParseUint64LongOption(t *testing.T) {
 		a := Uint64("little", 0, "little")
 		b := Uint64("big", 0, "big")
 
-		if got, want := parse("--big 42 --little 13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--big", "42", "--little", "13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -206,7 +206,7 @@ func TestParseUint64PMissingArgument(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("-t"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"-t"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -224,7 +224,7 @@ func TestParseUint64PMissingArgument(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("--little"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -244,7 +244,7 @@ func TestParseUint64PShortOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("-t 13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t", "13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -262,7 +262,7 @@ func TestParseUint64PShortOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("-t13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -280,7 +280,7 @@ func TestParseUint64PShortOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("-t13 -T42"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t13", "-T42"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -298,7 +298,7 @@ func TestParseUint64PShortOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("-T 42 -t 13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T", "42", "-t", "13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -316,7 +316,7 @@ func TestParseUint64PShortOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("-T42 -t13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T42", "-t13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -336,7 +336,7 @@ func TestParseUint64PLongOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("--little 13 --big 42"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--little", "13", "--big", "42"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -354,7 +354,7 @@ func TestParseUint64PLongOption(t *testing.T) {
 		a := Uint64P('t', "little", 0, "little")
 		b := Uint64P('T', "big", 0, "big")
 
-		if got, want := parse("--big 42 --little 13"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--big", "42", "--little", "13"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 

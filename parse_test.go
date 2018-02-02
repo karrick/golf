@@ -19,7 +19,7 @@ func ensurePanic(t *testing.T, errorMessage string, f func()) {
 
 func TestParseEmpty(t *testing.T) {
 	resetParser()
-	if got, want := parse(""), error(nil); got != want {
+	if got, want := parseArgs(nil), error(nil); got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 }
@@ -27,7 +27,7 @@ func TestParseEmpty(t *testing.T) {
 func TestParseUnknownOption(t *testing.T) {
 	t.Run("short", func(t *testing.T) {
 		resetParser()
-		got, want := parse("-a"), errors.New("unknown flag: 'a'")
+		got, want := parseArgs([]string{"-a"}), errors.New("unknown flag: 'a'")
 		if got == nil || got.Error() != want.Error() {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
@@ -35,7 +35,7 @@ func TestParseUnknownOption(t *testing.T) {
 
 	t.Run("long", func(t *testing.T) {
 		resetParser()
-		got, want := parse("--version"), errors.New("unknown flag: \"version\"")
+		got, want := parseArgs([]string{"--version"}), errors.New("unknown flag: \"version\"")
 		if got == nil || got.Error() != want.Error() {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
@@ -49,7 +49,7 @@ func TestParseComplex(t *testing.T) {
 	b := BoolP('v', "verbose", false, "print verbose info")
 	c := StringP('s', "servers", "", "ask servers")
 
-	if got, want := parse("-l 4 -v -s host1,host2 some other arguments"), error(nil); got != want {
+	if got, want := parseArgs([]string{"-l", "4", "-v", "-s", "host1,host2", "some", "other", "arguments"}), error(nil); got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
@@ -80,7 +80,7 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	a := IntP('l', "limit", 0, "limit results")
 	b := BoolP('v', "verbose", false, "print verbose info")
 
-	if got, want := parse("-l4 -- --verbose some other arguments"), error(nil); got != want {
+	if got, want := parseArgs([]string{"-l4", "--", "--verbose", "some", "other", "arguments"}), error(nil); got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
@@ -103,7 +103,7 @@ func TestParseConfused(t *testing.T) {
 	a := IntP('l', "limit", 0, "limit results")
 	b := BoolP('v', "verbose", false, "print verbose info")
 
-	if got, want := parse("-vl"), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
+	if got, want := parseArgs([]string{"-vl"}), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
@@ -126,7 +126,7 @@ func TestParseHyphenAfterShort(t *testing.T) {
 	a := IntP('l', "limit", 0, "limit results")
 	b := BoolP('v', "verbose", false, "print verbose info")
 
-	if got, want := parse("-v-l"), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
+	if got, want := parseArgs([]string{"-v-l"}), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
@@ -162,7 +162,7 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		c := StringP('c', "charlie", "", "some string")
 		d := BoolP('d', "delta", false, "some bool")
 
-		if got, want := parse("-ba 13 -c foo"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-ba", "13", "-c", "foo"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -191,7 +191,7 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		c := StringP('c', "charlie", "", "some string")
 		d := BoolP('d', "delta", false, "some bool")
 
-		if got, want := parse("-ba13 -c foo"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-ba13", "-c", "foo"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -210,5 +210,154 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		if got, want := *d, false; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
+	})
+}
+
+func ensureStringSlices(t *testing.T, a, b []string) {
+	t.Helper()
+	if a, b := len(a), len(b); a != b {
+		t.Errorf("len(a): %v; len(b): %v", a, b)
+		return
+	}
+	for i, s := range a {
+		if s != b[i] {
+			t.Errorf("a[%d]: %q; b[%d]: %v", i, a, i, b)
+		}
+	}
+}
+
+func TestParseArgs(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		// t.Skip()
+		resetParser()
+
+		if err := parseArgs(nil); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := argsProcessed, 0; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{})
+	})
+
+	t.Run("no flags but args", func(t *testing.T) {
+		// t.Skip()
+		resetParser()
+
+		if err := parseArgs([]string{"foo", "bar"}); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := argsProcessed, 0; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{"foo", "bar"})
+	})
+
+	t.Run("some flags and no args", func(t *testing.T) {
+		// t.Skip()
+		resetParser()
+
+		_ = Bool("b", false, "")
+		_ = Int("i", 0, "")
+
+		if err := parseArgs([]string{"-b", "-i", "13"}); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := argsProcessed, 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{})
+	})
+
+	t.Run("some flags and args", func(t *testing.T) {
+		// t.Skip()
+		resetParser()
+
+		b := Bool("b", false, "")
+		i := Int("i", -1, "")
+
+		if err := parseArgs([]string{"-b", "-i", "13", "foo", "bar"}); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := *b, true; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := *i, 13; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := argsProcessed, 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{"foo", "bar"})
+	})
+
+	t.Run("some flags and args without spaces", func(t *testing.T) {
+		// t.Skip()
+		resetParser()
+
+		b := Bool("b", false, "")
+		i := Int("i", -1, "")
+
+		if err := parseArgs([]string{"-b", "-i13", "foo", "bar"}); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := *b, true; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := *i, 13; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := argsProcessed, 2; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{"foo", "bar"})
+	})
+
+	t.Run("some flags with escaped runes and args", func(t *testing.T) {
+		// t.Skip()
+		resetParser()
+
+		_ = Bool("b", false, "")
+		s := String("s", "", "")
+
+		if err := parseArgs([]string{"-b", "-s ", "foo", "bar"}); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := *s, " "; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := argsProcessed, 2; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{"foo", "bar"})
+	})
+
+	t.Run("some flags with escaped runes and args", func(t *testing.T) {
+		resetParser()
+
+		_ = Bool("b", false, "")
+		s := String("s", "", "")
+
+		if err := parseArgs([]string{"-b", "-s", " ", "foo", "bar"}); err != nil {
+			t.Error(t)
+		}
+
+		if got, want := *s, " "; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+
+		if got, want := argsProcessed, 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		ensureStringSlices(t, Args(), []string{"foo", "bar"})
 	})
 }

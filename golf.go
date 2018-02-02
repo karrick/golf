@@ -11,22 +11,21 @@ import (
 // argument after flags have been processed. Arg returns an empty string if the
 // requested element does not exist.
 func Arg(i int) string {
-	n := argIndex + i
-	if n > len(os.Args)-1 {
+	if i >= len(remainingArguments) {
 		return ""
 	}
-	return os.Args[n]
+	return remainingArguments[i]
 }
 
 // Args returns the non-flag command-line arguments.
 func Args() []string {
-	return os.Args[argIndex:]
+	return remainingArguments
 }
 
 // NArg returns the number of arguments remaining after flags have been
 // processed.
 func NArg() int {
-	return len(os.Args) - argIndex
+	return len(remainingArguments)
 }
 
 // NFlag returns the number of command-line flags that have been set.

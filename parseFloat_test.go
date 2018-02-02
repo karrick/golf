@@ -24,7 +24,7 @@ func TestParseFloatMissingArgument(t *testing.T) {
 		a := Float("t", 0, "little")
 		b := Float("T", 0, "big")
 
-		if got, want := parse("-t"), "flag requires argument: 't'"; got.Error() != want {
+		if got, want := parseArgs([]string{"-t"}), "flag requires argument: 't'"; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -42,7 +42,7 @@ func TestParseFloatMissingArgument(t *testing.T) {
 		a := Float("little", 0, "little")
 		b := Float("big", 0, "big")
 
-		if got, want := parse("--little"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -62,7 +62,7 @@ func TestParseFloatShortOption(t *testing.T) {
 		a := Float("t", math.NaN(), "little")
 		b := Float("T", 0, "big")
 
-		if got, want := parse("-t 3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t", "3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -80,7 +80,7 @@ func TestParseFloatShortOption(t *testing.T) {
 		a := Float("t", 0, "little")
 		b := Float("T", 0, "big")
 
-		if got, want := parse("-t3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -98,7 +98,7 @@ func TestParseFloatShortOption(t *testing.T) {
 		a := Float("t", 0, "little")
 		b := Float("T", 0, "big")
 
-		if got, want := parse("-t3.14 -T2.78"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t3.14", "-T2.78"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -116,7 +116,7 @@ func TestParseFloatShortOption(t *testing.T) {
 		a := Float("t", 0, "little")
 		b := Float("T", 0, "big")
 
-		if got, want := parse("-T 2.78 -t 3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T", "2.78", "-t", "3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -134,7 +134,7 @@ func TestParseFloatShortOption(t *testing.T) {
 		a := Float("t", 0, "little")
 		b := Float("T", 0, "big")
 
-		if got, want := parse("-T2.78 -t3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T2.78", "-t3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -154,7 +154,7 @@ func TestParseFloatLongOption(t *testing.T) {
 		a := Float("little", 0, "little")
 		b := Float("big", 0, "big")
 
-		if got, want := parse("--little 3.14 --big 2.78"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--little", "3.14", "--big", "2.78"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -172,7 +172,7 @@ func TestParseFloatLongOption(t *testing.T) {
 		a := Float("little", 0, "little")
 		b := Float("big", 0, "big")
 
-		if got, want := parse("--big 2.78 --little 3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--big", "2.78", "--little", "3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -207,7 +207,7 @@ func TestParseFloatPMissingArgument(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("-t"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"-t"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -225,7 +225,7 @@ func TestParseFloatPMissingArgument(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("--little"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -245,7 +245,7 @@ func TestParseFloatPShortOption(t *testing.T) {
 		a := FloatP('t', "little", math.NaN(), "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("-t 3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t", "3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -263,7 +263,7 @@ func TestParseFloatPShortOption(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("-t3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -281,7 +281,7 @@ func TestParseFloatPShortOption(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("-t3.14 -T2.78"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t3.14", "-T2.78"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -299,7 +299,7 @@ func TestParseFloatPShortOption(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("-T 2.78 -t 3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T", "2.78", "-t", "3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -317,7 +317,7 @@ func TestParseFloatPShortOption(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("-T2.78 -t3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T2.78", "-t3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -337,7 +337,7 @@ func TestParseFloatPLongOption(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("--little 3.14 --big 2.78"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--little", "3.14", "--big", "2.78"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -355,7 +355,7 @@ func TestParseFloatPLongOption(t *testing.T) {
 		a := FloatP('t', "little", 0, "little")
 		b := FloatP('T', "big", 0, "big")
 
-		if got, want := parse("--big 2.78 --little 3.14"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--big", "2.78", "--little", "3.14"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 

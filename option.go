@@ -107,11 +107,11 @@ func parseSingleFlag(flag string) (rune, string, error) {
 // option is list of methods any concrete option needs to have for use by
 // parser.
 type option interface {
-	Default() interface{}   // default value of command line option
-	Description() string    // describes the command line option
-	Long() string           // long flag
-	NextState() parserState // next state for state machine
-	Short() rune            // short flag
+	Default() interface{} // default value of command line option
+	Description() string  // describes the command line option
+	Long() string         // long flag
+	NextSlurp() slurpType // next state for state machine
+	Short() rune          // short flag
 }
 
 type optionBool struct {
@@ -122,11 +122,11 @@ type optionBool struct {
 	def         bool
 }
 
-func (o optionBool) Default() interface{}   { return o.def }
-func (o optionBool) Description() string    { return o.description }
-func (o optionBool) Long() string           { return o.long }
-func (o optionBool) NextState() parserState { return wantBool }
-func (o optionBool) Short() rune            { return o.short }
+func (o optionBool) Default() interface{} { return o.def }
+func (o optionBool) Description() string  { return o.description }
+func (o optionBool) Long() string         { return o.long }
+func (o optionBool) NextSlurp() slurpType { return nothingToSlurp }
+func (o optionBool) Short() rune          { return o.short }
 
 // Bool returns a pointer to a bool command line option, allowing for either a
 // short or a long flag. If both are desired, use the BoolP function.
@@ -185,11 +185,11 @@ type optionDuration struct {
 	def         time.Duration
 }
 
-func (o optionDuration) Default() interface{}   { return o.def }
-func (o optionDuration) Description() string    { return o.description }
-func (o optionDuration) Long() string           { return o.long }
-func (o optionDuration) NextState() parserState { return wantDuration }
-func (o optionDuration) Short() rune            { return o.short }
+func (o optionDuration) Default() interface{} { return o.def }
+func (o optionDuration) Description() string  { return o.description }
+func (o optionDuration) Long() string         { return o.long }
+func (o optionDuration) NextSlurp() slurpType { return slurpDuration }
+func (o optionDuration) Short() rune          { return o.short }
 
 // Duration returns a pointer to a time.Duration command line option, allowing
 // for either a short or a long flag. If both are desired, use the DurationP
@@ -250,11 +250,11 @@ type optionFloat struct {
 	def         float64
 }
 
-func (o optionFloat) Default() interface{}   { return o.def }
-func (o optionFloat) Description() string    { return o.description }
-func (o optionFloat) Long() string           { return o.long }
-func (o optionFloat) NextState() parserState { return wantFloat }
-func (o optionFloat) Short() rune            { return o.short }
+func (o optionFloat) Default() interface{} { return o.def }
+func (o optionFloat) Description() string  { return o.description }
+func (o optionFloat) Long() string         { return o.long }
+func (o optionFloat) NextSlurp() slurpType { return slurpFloat }
+func (o optionFloat) Short() rune          { return o.short }
 
 // Float returns a pointer to a float64 command line option, allowing for either
 // a short or a long flag. If both are desired, use the FloatP function.
@@ -313,11 +313,11 @@ type optionInt struct {
 	def         int
 }
 
-func (o optionInt) Default() interface{}   { return o.def }
-func (o optionInt) Description() string    { return o.description }
-func (o optionInt) Long() string           { return o.long }
-func (o optionInt) NextState() parserState { return wantInt }
-func (o optionInt) Short() rune            { return o.short }
+func (o optionInt) Default() interface{} { return o.def }
+func (o optionInt) Description() string  { return o.description }
+func (o optionInt) Long() string         { return o.long }
+func (o optionInt) NextSlurp() slurpType { return slurpInt }
+func (o optionInt) Short() rune          { return o.short }
 
 // Int returns a pointer to a int command line option, allowing for either a
 // short or a long flag. If both are desired, use the IntP function.
@@ -376,11 +376,11 @@ type optionInt64 struct {
 	def         int64
 }
 
-func (o optionInt64) Default() interface{}   { return o.def }
-func (o optionInt64) Description() string    { return o.description }
-func (o optionInt64) Long() string           { return o.long }
-func (o optionInt64) NextState() parserState { return wantInt64 }
-func (o optionInt64) Short() rune            { return o.short }
+func (o optionInt64) Default() interface{} { return o.def }
+func (o optionInt64) Description() string  { return o.description }
+func (o optionInt64) Long() string         { return o.long }
+func (o optionInt64) NextSlurp() slurpType { return slurpInt64 }
+func (o optionInt64) Short() rune          { return o.short }
 
 // Int64 returns a pointer to a int64 command line option, allowing for either a
 // short or a long flag. If both are desired, use the Int64P function.
@@ -439,11 +439,11 @@ type optionUint struct {
 	def         uint
 }
 
-func (o optionUint) Default() interface{}   { return o.def }
-func (o optionUint) Description() string    { return o.description }
-func (o optionUint) Long() string           { return o.long }
-func (o optionUint) NextState() parserState { return wantUint }
-func (o optionUint) Short() rune            { return o.short }
+func (o optionUint) Default() interface{} { return o.def }
+func (o optionUint) Description() string  { return o.description }
+func (o optionUint) Long() string         { return o.long }
+func (o optionUint) NextSlurp() slurpType { return slurpUint }
+func (o optionUint) Short() rune          { return o.short }
 
 // Uint returns a pouinter to a uint command line option, allowing for either a
 // short or a long flag. If both are desired, use the UintP function.
@@ -502,11 +502,11 @@ type optionUint64 struct {
 	def         uint64
 }
 
-func (o optionUint64) Default() interface{}   { return o.def }
-func (o optionUint64) Description() string    { return o.description }
-func (o optionUint64) Short() rune            { return o.short }
-func (o optionUint64) Long() string           { return o.long }
-func (o optionUint64) NextState() parserState { return wantUint64 }
+func (o optionUint64) Default() interface{} { return o.def }
+func (o optionUint64) Description() string  { return o.description }
+func (o optionUint64) Long() string         { return o.long }
+func (o optionUint64) NextSlurp() slurpType { return slurpUint64 }
+func (o optionUint64) Short() rune          { return o.short }
 
 // Uint64 returns a pointer to a uint64 command line option, allowing for either a
 // short or a long flag. If both are desired, use the Uint64P function.
@@ -565,11 +565,11 @@ type optionString struct {
 	def         string
 }
 
-func (o optionString) Default() interface{}   { return o.def }
-func (o optionString) Description() string    { return o.description }
-func (o optionString) Short() rune            { return o.short }
-func (o optionString) Long() string           { return o.long }
-func (o optionString) NextState() parserState { return wantString }
+func (o optionString) Default() interface{} { return o.def }
+func (o optionString) Description() string  { return o.description }
+func (o optionString) Long() string         { return o.long }
+func (o optionString) NextSlurp() slurpType { return slurpString }
+func (o optionString) Short() rune          { return o.short }
 
 // String returns a postringer to a string command line option, allowing for either a
 // short or a long flag. If both are desired, use the StringP function.

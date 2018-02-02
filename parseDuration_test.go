@@ -24,7 +24,7 @@ func TestParseDurationMissingArgument(t *testing.T) {
 		a := Duration("t", 0, "little")
 		b := Duration("T", 0, "big")
 
-		if got, want := parse("-t"), "flag requires argument: 't'"; got.Error() != want {
+		if got, want := parseArgs([]string{"-t"}), "flag requires argument: 't'"; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -42,7 +42,7 @@ func TestParseDurationMissingArgument(t *testing.T) {
 		a := Duration("little", 0, "little")
 		b := Duration("big", 0, "big")
 
-		if got, want := parse("--little"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -62,7 +62,7 @@ func TestParseDurationShortOption(t *testing.T) {
 		a := Duration("t", 0, "little")
 		b := Duration("T", 0, "big")
 
-		if got, want := parse("-t 2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t", "2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -80,7 +80,7 @@ func TestParseDurationShortOption(t *testing.T) {
 		a := Duration("t", 0, "little")
 		b := Duration("T", 0, "big")
 
-		if got, want := parse("-t2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -98,7 +98,7 @@ func TestParseDurationShortOption(t *testing.T) {
 		a := Duration("t", 0, "little")
 		b := Duration("T", 0, "big")
 
-		if got, want := parse("-t2m -T3h"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t2m", "-T3h"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -116,7 +116,7 @@ func TestParseDurationShortOption(t *testing.T) {
 		a := Duration("t", 0, "little")
 		b := Duration("T", 0, "big")
 
-		if got, want := parse("-T 3h -t 2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T", "3h", "-t", "2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -134,7 +134,7 @@ func TestParseDurationShortOption(t *testing.T) {
 		a := Duration("t", 0, "little")
 		b := Duration("T", 0, "big")
 
-		if got, want := parse("-T3h -t2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T3h", "-t2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -154,7 +154,7 @@ func TestParseDurationLongOption(t *testing.T) {
 		a := Duration("little", 0, "little")
 		b := Duration("big", 0, "big")
 
-		if got, want := parse("--little 2m --big 3h"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--little", "2m", "--big", "3h"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -172,7 +172,7 @@ func TestParseDurationLongOption(t *testing.T) {
 		a := Duration("little", 0, "little")
 		b := Duration("big", 0, "big")
 
-		if got, want := parse("--big 3h --little 2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--big", "3h", "--little", "2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -207,7 +207,7 @@ func TestParseDurationPMissingArgument(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("-t"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"-t"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -225,7 +225,7 @@ func TestParseDurationPMissingArgument(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("--little"), "flag requires argument: \"little\""; got.Error() != want {
+		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -245,7 +245,7 @@ func TestParseDurationPShortOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("-t 2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t", "2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -263,7 +263,7 @@ func TestParseDurationPShortOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("-t2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -281,7 +281,7 @@ func TestParseDurationPShortOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("-t2m -T3h"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-t2m", "-T3h"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -299,7 +299,7 @@ func TestParseDurationPShortOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("-T 3h -t 2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T", "3h", "-t", "2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -317,7 +317,7 @@ func TestParseDurationPShortOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("-T3h -t2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"-T3h", "-t2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -337,7 +337,7 @@ func TestParseDurationPLongOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("--little 2m --big 3h"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--little", "2m", "--big", "3h"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
@@ -355,7 +355,7 @@ func TestParseDurationPLongOption(t *testing.T) {
 		a := DurationP('t', "little", 0, "little")
 		b := DurationP('T', "big", 0, "big")
 
-		if got, want := parse("--big 3h --little 2m"), error(nil); got != want {
+		if got, want := parseArgs([]string{"--big", "3h", "--little", "2m"}), error(nil); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
