@@ -361,3 +361,33 @@ func TestParseArgs(t *testing.T) {
 		ensureStringSlices(t, Args(), []string{"foo", "bar"})
 	})
 }
+
+func BenchmarkBool(b *testing.B) {
+	resetParser()
+	optUnfold := BoolP('u', "unfold", false, "unfold")
+	optDelimiter := StringP('d', "delimiter", "\n", "delimiter")
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = parseArgs([]string{"-u"})
+		if *optUnfold {
+			*optDelimiter = ","
+		}
+	}
+}
+
+func BenchmarkString(b *testing.B) {
+	resetParser()
+	optUnfold := BoolP('u', "unfold", false, "unfold")
+	optDelimiter := StringP('d', "delimiter", "\n", "delimiter")
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = parseArgs([]string{"-d,"})
+		if *optUnfold {
+			*optDelimiter = ","
+		}
+	}
+}
