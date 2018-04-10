@@ -62,10 +62,12 @@ func PrintDefaults() {
 		}
 
 		if description != "" {
-			fmt.Fprintf(os.Stderr, "\t%s (default: %v)\n", description, value)
+			description += fmt.Sprintf(" (default: %v)", value)
 		} else {
-			fmt.Fprintf(os.Stderr, "\t(default: %v)\n", value)
+			description = fmt.Sprintf("(default: %v)", value)
 		}
+		Print(os.Stderr, 80, "        ", description)
+		fmt.Fprintln(os.Stderr)
 	}
 }
 
