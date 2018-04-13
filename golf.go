@@ -11,10 +11,10 @@ import (
 // argument after flags have been processed. Arg returns an empty string if the
 // requested element does not exist.
 func Arg(i int) string {
-	if i >= len(remainingArguments) {
-		return ""
+	if i < len(remainingArguments) {
+		return remainingArguments[i]
 	}
-	return remainingArguments[i]
+	return ""
 }
 
 // Args returns the non-flag command-line arguments.

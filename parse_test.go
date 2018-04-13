@@ -65,13 +65,37 @@ func TestParseComplex(t *testing.T) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
-	// FIXME difficult to test when Args() invokes os.Args...
+	if got, want := strings.Join(Args(), " "), "some other arguments"; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+}
 
-	// fmt.Fprintf(os.Stderr, "%#v\n", Args())
+func TestParseComplexSomeFlagsAfterArgs(t *testing.T) {
+	resetParser()
 
-	// if got, want := strings.Join(Args(), " "), "some other arguments"; got != want {
-	// 	t.Errorf("GOT: %v; WANT: %v", got, want)
-	// }
+	a := IntP('l', "limit", 0, "limit results")
+	b := BoolP('v', "verbose", false, "print verbose info")
+	c := StringP('s', "servers", "", "ask servers")
+
+	if got, want := parseArgs([]string{"-l", "4", "some", "-v", "-s", "host1,host2", "other", "arguments"}), error(nil); got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+
+	if got, want := *a, 4; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+
+	if got, want := *b, true; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+
+	if got, want := *c, "host1,host2"; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+
+	if got, want := strings.Join(Args(), " "), "some other arguments"; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
 }
 
 func TestParseStopsAfterDoubleHyphen(t *testing.T) {
@@ -80,7 +104,7 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	a := IntP('l', "limit", 0, "limit results")
 	b := BoolP('v', "verbose", false, "print verbose info")
 
-	if got, want := parseArgs([]string{"-l4", "--", "--verbose", "some", "other", "arguments"}), error(nil); got != want {
+	if got, want := parseArgs([]string{"-l4", "some", "--", "--verbose", "other", "arguments"}), error(nil); got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
@@ -91,19 +115,19 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	if got, want := *b, false; got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
+
+	if got, want := strings.Join(Args(), " "), "some"; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
 }
 
 func TestParseConfused(t *testing.T) {
-	// ??? It would be nice to test for exact string match to automate ensuring
-	// proper argument is returned in the error message.
-	t.Skip("only works with long command line")
-
 	resetParser()
 
 	a := IntP('l', "limit", 0, "limit results")
 	b := BoolP('v', "verbose", false, "print verbose info")
 
-	if got, want := parseArgs([]string{"-vl"}), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
+	if got, want := parseArgs([]string{"-vl"}), "flag requires argument"; !strings.HasPrefix(got.Error(), want) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
@@ -117,16 +141,12 @@ func TestParseConfused(t *testing.T) {
 }
 
 func TestParseHyphenAfterShort(t *testing.T) {
-	// ??? It would be nice to test for exact string match to automate ensuring
-	// proper argument is returned in the error message.
-	t.Skip("only works with long command line")
-
 	resetParser()
 
 	a := IntP('l', "limit", 0, "limit results")
 	b := BoolP('v', "verbose", false, "print verbose info")
 
-	if got, want := parseArgs([]string{"-v-l"}), "cannot parse argument"; !strings.HasPrefix(got.Error(), want) {
+	if got, want := parseArgs([]string{"-v-l"}), "unknown flag: '-'"; !strings.HasPrefix(got.Error(), want) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 
