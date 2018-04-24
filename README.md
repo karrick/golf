@@ -17,6 +17,8 @@ arguments.
 * Helpful functions for printing help and usage information.
 * Optional space between short flag and its argument.
 * No new concepts to learn beyond typical use of flag library.
+* Supports GNU extension allowing flags to appear intermixed with
+  other command line arguments.
 
 ## Usage Example
 
@@ -51,13 +53,18 @@ double-hyphen prefix when the flag is more than one rune long.
 ## Features
 
 golf allows specifying both a short and a long flag name by calling
-the same function stem but with a P suffix, as shown below.
+the same function stem but with a P suffix, as shown below. When
+declaring a short and long flag pair, the short flag type is a rune,
+to prevent accidentally initializing a command line flag pair with two
+multi-rune strings, which is not allowed. (The reason for this
+compromise is because the command line flag declaration pattern used
+by `flag` provides no means for signalling an error.)
 
 ```Go
-optRaw := golf.BoolP("r", "raw", false, "Display raw output")
-optServer := golf.StringP("s", "server", "", "Send query to specified server")
-optTheshold := golf.FloatP("t", "threshold", 0, "Set minimum threshold")
-optVerbose := golf.BoolP("v", "verbose", false, "Display verbose output")
+optRaw := golf.BoolP('r', "raw", false, "Display raw output")
+optServer := golf.StringP('s', "server", "", "Send query to specified server")
+optTheshold := golf.FloatP('t', "threshold", 0, "Set minimum threshold")
+optVerbose := golf.BoolP('v', "verbose", false, "Display verbose output")
 golf.Parse()
 ```
 
@@ -88,18 +95,32 @@ and the 4. Nevertheless, both are equivalent and unambiguous:
 
 To prevent ambiguities, however, golf does not allow placing any
 additional flags after a flag that requires an argument, even if it
-may appear to be legal. For instance, if the i takes an integer and
-the s flag takes a string, this will still result in a parsing error:
+may appear to be legal, in the same argument. For instance, if the i
+takes an integer and the s flag takes a string, this will still result
+in a parsing error:
 
     $ example -i4sfoo.example.com
     ERROR: strconv.ParseInt: parsing "4sfoo.example.com": invalid syntax
 
+This however is legal:
+
+    $ example -i4 -sfoo.example.com
+
 In an attempt to be largely compatible with the flag library,
 specifying an option flag has no error return value, so attempting to
-create a flag with illegal arguments will panic. While this behavior
-is not necessarily acceptable for libraries, if command line options
-are not correctly defined by the program the case will be caught early
-by running the program.
+create a flag with illegal arguments will panic. While causing a panic
+is poor practice for a library, if command line options are not
+correctly defined by the program the case will be caught early by
+running the program.
+
+This library supports a common practice in GNU command line argument
+parsing that allows command line flags and command line arguments to
+be intermixed. For instance, the following invocations would be
+equivalent.
+
+    $ example -t 3.14 arg1 arg2
+    $ example arg1 -t3.14 arg2
+    $ example arg1 arg2 -t 3.14
 
 ## Help Example
 
