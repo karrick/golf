@@ -157,8 +157,7 @@ func parseArgs(args []string) error {
 		}
 
 		// nothing to slurp, so need to read runes one by one
-		var runeParserState runeParserStateType
-		runeParserState = beginArgument // ??? is this needed because of zero value
+		runeParserState := beginArgument
 		flagText = ""
 
 		for bi, r := range arg { // bi (byte index)
