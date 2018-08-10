@@ -61,10 +61,16 @@ func PrintDefaults() {
 			fmt.Fprintf(os.Stderr, "  --%s%s\n", long, typeName)
 		}
 
+		d := "%v"
+		switch value.(type) {
+		case string, rune:
+			d = "%q"
+		}
+
 		if description != "" {
-			fmt.Fprintf(os.Stderr, "\t%s (default: %v)\n", description, value)
+			fmt.Fprintf(os.Stderr, "\t%s (default: "+d+")\n", description, value)
 		} else {
-			fmt.Fprintf(os.Stderr, "\t(default: %v)\n", value)
+			fmt.Fprintf(os.Stderr, "\t(default: "+d+")\n", value)
 		}
 	}
 }

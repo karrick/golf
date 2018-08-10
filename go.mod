@@ -1,1 +1,1 @@
-module "github.com/karrick/golf"
+module github.com/karrick/golf
