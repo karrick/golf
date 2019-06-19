@@ -3,7 +3,6 @@ package golf
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"unicode/utf8"
 )
 
@@ -75,8 +74,9 @@ func PrintDefaults() {
 	}
 }
 
-// Usage prints command line usage to stderr.
-func Usage() {
-	fmt.Fprintf(os.Stderr, "Usage of %s:\n", filepath.Base(os.Args[0]))
+// Usage prints command line usage to stderr, but may be overridden by programs
+// that need to customize the usage information.
+var Usage = func() {
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 	PrintDefaults()
 }

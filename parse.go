@@ -9,14 +9,11 @@ import (
 )
 
 var (
+	flags              []option
+	remainingArguments []string // keep track of remaining arguments
 	argsProcessed      int      // keep track of how many arguments have been set
 	parsed             bool     // keep track of whether command line arguments have been parsed
-	remainingArguments []string // keep track of remaining arguments
 )
-
-func init() {
-	resetParser()
-}
 
 func resetParser() {
 	argsProcessed = 0
@@ -30,7 +27,7 @@ func resetParser() {
 func Parse() {
 	// combine os.Args to a single string
 	if err := parseArgs(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
 		Usage()
 		os.Exit(2)
 	}
