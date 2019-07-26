@@ -108,7 +108,6 @@ func Parsed() bool {
 }
 
 func slurpText(text string, nextSlurp slurpType, f option) error {
-	var i64 int64
 	var ui64 uint64
 	var err error
 
@@ -118,12 +117,11 @@ func slurpText(text string, nextSlurp slurpType, f option) error {
 	case slurpFloat:
 		*f.(*optionFloat).pv, err = strconv.ParseFloat(text, 64)
 	case slurpInt:
-		i64, err = strconv.ParseInt(text, 10, 64)
-		*f.(*optionInt).pv = int(i64)
+		*f.(*optionInt).pv, err = strconv.Atoi(text)
 	case slurpInt64:
 		*f.(*optionInt64).pv, err = strconv.ParseInt(text, 10, 64)
 	case slurpUint:
-		ui64, err = strconv.ParseUint(text, 10, 64)
+		ui64, err = strconv.ParseUint(text, 10, 0)
 		*f.(*optionUint).pv = uint(ui64)
 	case slurpUint64:
 		*f.(*optionUint64).pv, err = strconv.ParseUint(text, 10, 64)
