@@ -2,6 +2,7 @@ package golf
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"unicode/utf8"
 )
@@ -35,6 +36,12 @@ func NFlag() int {
 // PrintDefaults prints to standard error, a usage message showing the default
 // settings of all defined command-line flags.
 func PrintDefaults() {
+	PrintDefaultsTo(os.Stderr)
+}
+
+// PrintDefaultsTo prints to w, a usage message showing the default settings of
+// all defined command-line flags.
+func PrintDefaultsTo(w io.Writer) {
 	for _, opt := range flags {
 		var def, typeName string
 		description := opt.Description()
@@ -56,16 +63,16 @@ func PrintDefaults() {
 
 		if short != utf8.RuneError {
 			if long != "" {
-				fmt.Fprintf(os.Stderr, "  -%c, --%s%s%s\n", short, long, typeName, def)
+				fmt.Fprintf(w, "  -%c, --%s%s%s\n", short, long, typeName, def)
 			} else {
-				fmt.Fprintf(os.Stderr, "  -%c%s%s\n", short, typeName, def)
+				fmt.Fprintf(w, "  -%c%s%s\n", short, typeName, def)
 			}
 		} else {
-			fmt.Fprintf(os.Stderr, "  --%s%s%s\n", long, typeName, def)
+			fmt.Fprintf(w, "  --%s%s%s\n", long, typeName, def)
 		}
 
 		if description != "" {
-			fmt.Fprint(os.Stderr, dw.Wrap(fmt.Sprintf("%s", description)))
+			fmt.Fprint(w, dw.Wrap(fmt.Sprintf("%s", description)))
 		}
 	}
 }
