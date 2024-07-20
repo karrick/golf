@@ -122,6 +122,36 @@ equivalent.
     $ example arg1 -t3.14 arg2
     $ example arg1 arg2 -t 3.14
 
+### Callback functions
+
+Is is possible to register command line arguments with callback functions
+through the `<Type>Func` and `<Type>FuncP` functions. These callback functions
+will be called after an argument's value is changed, with the new value as their
+sole parameter. They may return an error which will interrupt argument parsing.
+
+This allows arguments-related state to be used during parsing and not only once
+it is done.
+
+    $ example -p --thingy -p
+    The thingy is disabled.
+    The thingy is enabled.
+    $ example -p --quiet -p
+    The thingy is disabled.
+    ERROR: Cannot print the thingy's state in quiet mode
+
+### Toggleable booleans
+
+Unlike `flag`, this library does not support setting values for boolean flags
+directly. It is however possible to have two options that "negate" each other.
+
+	optThingy := golf.Bool("thingy=no", true, "Disable the thingy")
+	golf.BoolVar(optThingy, "thingy", false, "Enable the thingy")
+
+Because boolean flags will set the variable's value to the negation of their
+default value, the above two lines will allow `--thingy` and `--thingy=no` to
+be used to toggle the feature. The second line will set the variable's actual
+default.
+
 ## Help Example
 
 Invoking `golf.Usage()` will display the program name, followed by a

@@ -131,7 +131,11 @@ func slurpText(text string, nextSlurp slurpType, f option) error {
 		err = fmt.Errorf("unexpected slurp state: %v", nextSlurp)
 	}
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	return f.Callback()
 }
 
 func parseArgs(args []string) error {
@@ -190,7 +194,9 @@ func parseArgs(args []string) error {
 					}
 					switch flagType = f.NextSlurp(); flagType {
 					case nothingToSlurp:
-						*f.(*optionBool).pv = true
+						if err := f.(*optionBool).toggleOption(); err != nil {
+							return err
+						}
 						runeParserState = wantShortFlagsOnly
 					default:
 						runeParserState = wantText
@@ -203,7 +209,9 @@ func parseArgs(args []string) error {
 				}
 				switch flagType = f.NextSlurp(); flagType {
 				case nothingToSlurp:
-					*f.(*optionBool).pv = true
+					if err := f.(*optionBool).toggleOption(); err != nil {
+						return err
+					}
 				default:
 					runeParserState = wantText
 				}
@@ -245,7 +253,9 @@ func parseArgs(args []string) error {
 				return fmt.Errorf("unknown flag: %q", flagName)
 			}
 			if flagType = f.NextSlurp(); flagType == nothingToSlurp {
-				*f.(*optionBool).pv = true
+				if err := f.(*optionBool).toggleOption(); err != nil {
+					return err
+				}
 			}
 			argsProcessed++
 		default:

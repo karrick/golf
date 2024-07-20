@@ -1,6 +1,7 @@
 package golf
 
 import (
+	"fmt"
 	"testing"
 	"unicode/utf8"
 )
@@ -366,4 +367,93 @@ func TestParseUintPLongOption(t *testing.T) {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
+}
+
+func TestParseUintFunc(t *testing.T) {
+	t.Run("callback called", func(t *testing.T) {
+		resetParser()
+		var cbArg *uint
+		opt := UintFunc("o", 0, "some option", func(v uint) error {
+			cbArg = &v
+			return nil
+		})
+
+		if got, want := *opt, uint(0); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := parseArgs([]string{"-o", "12345"}), error(nil); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := *opt, uint(12345); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := (cbArg == nil), false; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := *cbArg, uint(12345); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
+	t.Run("callback error", func(t *testing.T) {
+		resetParser()
+		cbErr := fmt.Errorf("failure is the only option")
+		opt := UintFunc("o", 0, "some option", func(v uint) error {
+			return cbErr
+		})
+
+		if got, want := *opt, uint(0); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := parseArgs([]string{"-o", "12345"}), cbErr; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
+}
+
+func TestParseUintFuncP(t *testing.T) {
+	type Test struct {
+		title  string
+		parsed string
+	}
+	tests := []Test{{title: "short", parsed: "-o"}, {title: "long", parsed: "--option"}}
+	for _, test := range tests {
+		t.Run("callback called with "+test.title+" option", func(t *testing.T) {
+			resetParser()
+			var cbArg *uint
+			opt := UintFuncP('o', "option", 0, "some option", func(v uint) error {
+				cbArg = &v
+				return nil
+			})
+
+			if got, want := *opt, uint(0); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := parseArgs([]string{test.parsed, "12345"}), error(nil); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := *opt, uint(12345); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := (cbArg == nil), false; got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := *cbArg, uint(12345); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+		})
+		t.Run("callback error with "+test.title+" option", func(t *testing.T) {
+			resetParser()
+			cbErr := fmt.Errorf("failure is the only option")
+			opt := UintFuncP('o', "option", 0, "some option", func(v uint) error {
+				return cbErr
+			})
+
+			if got, want := *opt, uint(0); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := parseArgs([]string{test.parsed, "12345"}), cbErr; got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+		})
+	}
 }

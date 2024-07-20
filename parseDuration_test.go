@@ -1,6 +1,7 @@
 package golf
 
 import (
+	"fmt"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -367,4 +368,93 @@ func TestParseDurationPLongOption(t *testing.T) {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
+}
+
+func TestParseDurationFunc(t *testing.T) {
+	t.Run("callback called", func(t *testing.T) {
+		resetParser()
+		var cbArg *time.Duration
+		opt := DurationFunc("o", 0, "some option", func(v time.Duration) error {
+			cbArg = &v
+			return nil
+		})
+
+		if got, want := *opt, time.Duration(0); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := parseArgs([]string{"-o", "2m"}), error(nil); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := *opt, 2*time.Minute; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := (cbArg == nil), false; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := *cbArg, 2*time.Minute; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
+	t.Run("callback error", func(t *testing.T) {
+		resetParser()
+		cbErr := fmt.Errorf("failure is the only option")
+		opt := DurationFunc("o", 0, "some option", func(v time.Duration) error {
+			return cbErr
+		})
+
+		if got, want := *opt, time.Duration(0); got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := parseArgs([]string{"-o", "2m"}), cbErr; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+	})
+}
+
+func TestParseDurationFuncP(t *testing.T) {
+	type Test struct {
+		title  string
+		parsed string
+	}
+	tests := []Test{{title: "short", parsed: "-o"}, {title: "long", parsed: "--option"}}
+	for _, test := range tests {
+		t.Run("callback called with "+test.title+" option", func(t *testing.T) {
+			resetParser()
+			var cbArg *time.Duration
+			opt := DurationFuncP('o', "option", 0, "some option", func(v time.Duration) error {
+				cbArg = &v
+				return nil
+			})
+
+			if got, want := *opt, time.Duration(0); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := parseArgs([]string{test.parsed, "2m"}), error(nil); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := *opt, 2*time.Minute; got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := (cbArg == nil), false; got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := *cbArg, 2*time.Minute; got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+		})
+		t.Run("callback error with "+test.title+" option", func(t *testing.T) {
+			resetParser()
+			cbErr := fmt.Errorf("failure is the only option")
+			opt := DurationFuncP('o', "option", 0, "some option", func(v time.Duration) error {
+				return cbErr
+			})
+
+			if got, want := *opt, time.Duration(0); got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+			if got, want := parseArgs([]string{test.parsed, "2m"}), cbErr; got != want {
+				t.Errorf("GOT: %v; WANT: %v", got, want)
+			}
+		})
+	}
 }

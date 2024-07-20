@@ -22,6 +22,32 @@ func main() {
 	_ = golf.String("t", "host3,host4", "Another string")
 	_ = golf.String("flubbers", "host5", "Yet another string")
 
+	// Callbacks and bool default usage. Try it with
+	// "-p --thingy -p --thingy=no -p --quiet -p"
+	optThingy := golf.Bool("thingy=no", true, "Disable the thingy")
+	golf.BoolVar(optThingy, "thingy", false, "Enable the thingy")
+	_ = golf.BoolFuncP('p', "print-thingy", false, "Print the thingy's state", func(bool) error {
+		if *optQuiet {
+			return fmt.Errorf("Cannot print the thingy's state in quiet mode")
+		}
+		if *optThingy {
+			fmt.Fprintln(os.Stderr, "The thingy is enabled.")
+		} else {
+			fmt.Fprintln(os.Stderr, "The thingy is disabled.")
+		}
+		return nil
+	})
+
+	// Callbacks used for list construction
+	list := []string{}
+	_ = golf.StringFunc("a", "", "append to a list", func(v string) error {
+		if v == "" {
+			return fmt.Errorf("Cannot append empty string")
+		}
+		list = append(list, v)
+		return nil
+	})
+
 	golf.Parse()
 
 	if *optHelp || *optVersion {
@@ -41,4 +67,5 @@ func main() {
 	fmt.Fprintf(os.Stderr, "# limit: %v\n", *optLimit)
 	fmt.Fprintf(os.Stderr, "# quiet: %t\n", *optQuiet)
 	fmt.Fprintf(os.Stderr, "# verbose: %t\n", *optVerbose)
+	fmt.Fprintf(os.Stderr, "# list: %v\n", list)
 }
