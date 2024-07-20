@@ -110,10 +110,12 @@ type option interface {
 	Long() string         // long flag
 	NextSlurp() slurpType // next state for state machine
 	Short() rune          // short flag
+	Callback() error      // call the callback function set for this option
 }
 
 type optionBool struct {
 	pv          *bool
+	cb          *func(bool) error
 	long        string
 	description string
 	short       rune
@@ -125,6 +127,18 @@ func (o optionBool) Description() string  { return o.description }
 func (o optionBool) Long() string         { return o.long }
 func (o optionBool) NextSlurp() slurpType { return nothingToSlurp }
 func (o optionBool) Short() rune          { return o.short }
+
+func (o optionBool) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
+
+func (o optionBool) toggleOption() error {
+	*o.pv = !o.def
+	return o.Callback()
+}
 
 // Bool returns a pointer to a bool command line option, allowing for either a
 // short or a long flag. If both are desired, use the BoolP function.
@@ -151,6 +165,17 @@ func BoolVar(pv *bool, flag string, value bool, description string) {
 	})
 }
 
+// BoolFunc creates a boolean command line option with either a short or a long
+// flag, and sets a callback function that will be called when the option is
+// processed. It returns a pointer to the variable.
+func BoolFunc(flag string, value bool, description string, cb func(bool) error) *bool {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeBoolFunc(short, long, value, description, cb)
+}
+
 // BoolP returns a pointer to a bool command line option, allowing for both a
 // short and a long flag.
 func BoolP(short rune, long string, value bool, description string) *bool {
@@ -175,8 +200,32 @@ func BoolVarP(pv *bool, short rune, long string, value bool, description string)
 	})
 }
 
+// BoolFuncP creates a boolean command line option with both a short and a long
+// flag, and sets a callback function that will be called when the option is
+// processed. It returns a pointer to the variable.
+func BoolFuncP(short rune, long string, value bool, description string, cb func(bool) error) *bool {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeBoolFunc(short, long, value, description, cb)
+}
+
+func makeBoolFunc(short rune, long string, value bool, description string, cb func(bool) error) *bool {
+	v := value
+	flags = append(flags, &optionBool{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionDuration struct {
 	pv          *time.Duration
+	cb          *func(time.Duration) error
 	description string
 	long        string
 	short       rune
@@ -188,6 +237,13 @@ func (o optionDuration) Description() string  { return o.description }
 func (o optionDuration) Long() string         { return o.long }
 func (o optionDuration) NextSlurp() slurpType { return slurpDuration }
 func (o optionDuration) Short() rune          { return o.short }
+
+func (o optionDuration) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // Duration returns a pointer to a time.Duration command line option, allowing
 // for either a short or a long flag. If both are desired, use the DurationP
@@ -216,6 +272,17 @@ func DurationVar(pv *time.Duration, flag string, value time.Duration, descriptio
 	})
 }
 
+// DurationFunc creates a time.Duration command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func DurationFunc(flag string, value time.Duration, description string, cb func(time.Duration) error) *time.Duration {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeDurationFunc(short, long, value, description, cb)
+}
+
 // DurationP returns a pointer to a time.Duration command line option, allowing
 // for both a short and a long flag.
 func DurationP(short rune, long string, value time.Duration, description string) *time.Duration {
@@ -240,8 +307,33 @@ func DurationVarP(pv *time.Duration, short rune, long string, value time.Duratio
 	})
 }
 
+// DurationFuncP creates a time.Duration command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func DurationFuncP(short rune, long string, value time.Duration, description string, cb func(time.Duration) error) *time.Duration {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeDurationFunc(short, long, value, description, cb)
+}
+
+func makeDurationFunc(short rune, long string, value time.Duration, description string, cb func(time.Duration) error) *time.Duration {
+	v := value
+	flags = append(flags, &optionDuration{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionFloat struct {
 	pv          *float64
+	cb          *func(float64) error
 	description string
 	short       rune
 	long        string
@@ -253,6 +345,13 @@ func (o optionFloat) Description() string  { return o.description }
 func (o optionFloat) Long() string         { return o.long }
 func (o optionFloat) NextSlurp() slurpType { return slurpFloat }
 func (o optionFloat) Short() rune          { return o.short }
+
+func (o optionFloat) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // Float returns a pointer to a float64 command line option, allowing for either
 // a short or a long flag. If both are desired, use the FloatP function.
@@ -279,6 +378,17 @@ func FloatVar(pv *float64, flag string, value float64, description string) {
 	})
 }
 
+// FloatFunc creates a float64 command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func FloatFunc(flag string, value float64, description string, cb func(float64) error) *float64 {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeFloatFunc(short, long, value, description, cb)
+}
+
 // FloatP returns a pointer to a float64 command line option, allowing for both
 // a short and a long flag.
 func FloatP(short rune, long string, value float64, description string) *float64 {
@@ -303,8 +413,33 @@ func FloatVarP(pv *float64, short rune, long string, value float64, description 
 	})
 }
 
+// FloatFuncP creates a float64 command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func FloatFuncP(short rune, long string, value float64, description string, cb func(float64) error) *float64 {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeFloatFunc(short, long, value, description, cb)
+}
+
+func makeFloatFunc(short rune, long string, value float64, description string, cb func(float64) error) *float64 {
+	v := value
+	flags = append(flags, &optionFloat{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionInt struct {
 	pv          *int
+	cb          *func(int) error
 	description string
 	short       rune
 	long        string
@@ -316,6 +451,13 @@ func (o optionInt) Description() string  { return o.description }
 func (o optionInt) Long() string         { return o.long }
 func (o optionInt) NextSlurp() slurpType { return slurpInt }
 func (o optionInt) Short() rune          { return o.short }
+
+func (o optionInt) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // Int returns a pointer to a int command line option, allowing for either a
 // short or a long flag. If both are desired, use the IntP function.
@@ -342,6 +484,17 @@ func IntVar(pv *int, flag string, value int, description string) {
 	})
 }
 
+// IntFunc creates a int command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func IntFunc(flag string, value int, description string, cb func(int) error) *int {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeIntFunc(short, long, value, description, cb)
+}
+
 // IntP returns a pointer to a int command line option, allowing for both a
 // short and a long flag.
 func IntP(short rune, long string, value int, description string) *int {
@@ -366,8 +519,33 @@ func IntVarP(pv *int, short rune, long string, value int, description string) {
 	})
 }
 
+// IntFuncP creates a int command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func IntFuncP(short rune, long string, value int, description string, cb func(int) error) *int {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeIntFunc(short, long, value, description, cb)
+}
+
+func makeIntFunc(short rune, long string, value int, description string, cb func(int) error) *int {
+	v := value
+	flags = append(flags, &optionInt{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionInt64 struct {
 	pv          *int64
+	cb          *func(int64) error
 	description string
 	short       rune
 	long        string
@@ -379,6 +557,13 @@ func (o optionInt64) Description() string  { return o.description }
 func (o optionInt64) Long() string         { return o.long }
 func (o optionInt64) NextSlurp() slurpType { return slurpInt64 }
 func (o optionInt64) Short() rune          { return o.short }
+
+func (o optionInt64) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // Int64 returns a pointer to a int64 command line option, allowing for either a
 // short or a long flag. If both are desired, use the Int64P function.
@@ -405,6 +590,17 @@ func Int64Var(pv *int64, flag string, value int64, description string) {
 	})
 }
 
+// Int64Func creates a int64 command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func Int64Func(flag string, value int64, description string, cb func(int64) error) *int64 {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeInt64Func(short, long, value, description, cb)
+}
+
 // Int64P returns a pointer to a int64 command line option, allowing for both a
 // short and a long flag.
 func Int64P(short rune, long string, value int64, description string) *int64 {
@@ -429,8 +625,33 @@ func Int64VarP(pv *int64, short rune, long string, value int64, description stri
 	})
 }
 
+// Int64FuncP creates a int64 command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func Int64FuncP(short rune, long string, value int64, description string, cb func(int64) error) *int64 {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeInt64Func(short, long, value, description, cb)
+}
+
+func makeInt64Func(short rune, long string, value int64, description string, cb func(int64) error) *int64 {
+	v := value
+	flags = append(flags, &optionInt64{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionUint struct {
 	pv          *uint
+	cb          *func(uint) error
 	description string
 	short       rune
 	long        string
@@ -442,6 +663,13 @@ func (o optionUint) Description() string  { return o.description }
 func (o optionUint) Long() string         { return o.long }
 func (o optionUint) NextSlurp() slurpType { return slurpUint }
 func (o optionUint) Short() rune          { return o.short }
+
+func (o optionUint) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // Uint returns a pouinter to a uint command line option, allowing for either a
 // short or a long flag. If both are desired, use the UintP function.
@@ -468,6 +696,17 @@ func UintVar(pv *uint, flag string, value uint, description string) {
 	})
 }
 
+// UintFunc creates a uint command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func UintFunc(flag string, value uint, description string, cb func(uint) error) *uint {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeUintFunc(short, long, value, description, cb)
+}
+
 // UintP returns a pouinter to a uint command line option, allowing for both a
 // short and a long flag.
 func UintP(short rune, long string, value uint, description string) *uint {
@@ -492,8 +731,33 @@ func UintVarP(pv *uint, short rune, long string, value uint, description string)
 	})
 }
 
+// UintFuncP creates a uint command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func UintFuncP(short rune, long string, value uint, description string, cb func(uint) error) *uint {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeUintFunc(short, long, value, description, cb)
+}
+
+func makeUintFunc(short rune, long string, value uint, description string, cb func(uint) error) *uint {
+	v := value
+	flags = append(flags, &optionUint{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionUint64 struct {
 	pv          *uint64
+	cb          *func(uint64) error
 	description string
 	short       rune
 	long        string
@@ -505,6 +769,13 @@ func (o optionUint64) Description() string  { return o.description }
 func (o optionUint64) Long() string         { return o.long }
 func (o optionUint64) NextSlurp() slurpType { return slurpUint64 }
 func (o optionUint64) Short() rune          { return o.short }
+
+func (o optionUint64) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // Uint64 returns a pointer to a uint64 command line option, allowing for either a
 // short or a long flag. If both are desired, use the Uint64P function.
@@ -531,6 +802,17 @@ func Uint64Var(pv *uint64, flag string, value uint64, description string) {
 	})
 }
 
+// Uint64Func creates a uint64 command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func Uint64Func(flag string, value uint64, description string, cb func(uint64) error) *uint64 {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeUint64Func(short, long, value, description, cb)
+}
+
 // Uint64P returns a pointer to a uint64 command line option, allowing for both a
 // short and a long flag.
 func Uint64P(short rune, long string, value uint64, description string) *uint64 {
@@ -555,8 +837,33 @@ func Uint64VarP(pv *uint64, short rune, long string, value uint64, description s
 	})
 }
 
+// Uint64FuncP creates a uint64 command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func Uint64FuncP(short rune, long string, value uint64, description string, cb func(uint64) error) *uint64 {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeUint64Func(short, long, value, description, cb)
+}
+
+func makeUint64Func(short rune, long string, value uint64, description string, cb func(uint64) error) *uint64 {
+	v := value
+	flags = append(flags, &optionUint64{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
+}
+
 type optionString struct {
 	pv          *string
+	cb          *func(string) error
 	description string
 	short       rune
 	long        string
@@ -568,6 +875,13 @@ func (o optionString) Description() string  { return o.description }
 func (o optionString) Long() string         { return o.long }
 func (o optionString) NextSlurp() slurpType { return slurpString }
 func (o optionString) Short() rune          { return o.short }
+
+func (o optionString) Callback() error {
+	if o.cb != nil {
+		return (*o.cb)(*o.pv)
+	}
+	return nil
+}
 
 // String returns a postringer to a string command line option, allowing for either a
 // short or a long flag. If both are desired, use the StringP function.
@@ -594,6 +908,17 @@ func StringVar(pv *string, flag string, value string, description string) {
 	})
 }
 
+// StringFunc creates a string command line option with either a short
+// or a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable.
+func StringFunc(flag string, value string, description string, cb func(string) error) *string {
+	short, long, err := parseSingleFlag(flag)
+	if err != nil {
+		panic(err)
+	}
+	return makeStringFunc(short, long, value, description, cb)
+}
+
 // StringP returns a postringer to a string command line option, allowing for both a
 // short and a long flag.
 func StringP(short rune, long string, value string, description string) *string {
@@ -616,4 +941,28 @@ func StringVarP(pv *string, short rune, long string, value string, description s
 		pv:          pv,
 		def:         value,
 	})
+}
+
+// StringFuncP creates a string command line option with both a short
+// and a long flag, and sets a callback function that will be called when the
+// option is processed. It returns a pointer to the variable that contains the
+// value.
+func StringFuncP(short rune, long string, value string, description string, cb func(string) error) *string {
+	if err := parseShortAndLongFlag(short, long); err != nil {
+		panic(err)
+	}
+	return makeStringFunc(short, long, value, description, cb)
+}
+
+func makeStringFunc(short rune, long string, value string, description string, cb func(string) error) *string {
+	v := value
+	flags = append(flags, &optionString{
+		description: description,
+		long:        long,
+		short:       short,
+		pv:          &v,
+		cb:          &cb,
+		def:         value,
+	})
+	return &v
 }
