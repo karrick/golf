@@ -1,3 +1,4 @@
+//go:build golf_debug
 // +build golf_debug
 
 package golf

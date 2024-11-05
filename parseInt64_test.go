@@ -6,363 +6,259 @@ import (
 )
 
 func TestInt64Invalid(t *testing.T) {
-	ensurePanic(t, "cannot use empty flag string", func() {
-		_ = Int64("", 0, "some example flag")
+	var b int64
+
+	ensureParserError(t, "cannot use empty flag string", func(t *testing.T, p *Parser) {
+		p.WithInt64Var(&b, "", "some example flag")
 	})
-	ensurePanic(t, "cannot use flag that starts with a hyphen: \"-e\"", func() {
-		_ = Int64("-e", 0, "some example flag")
+	ensureParserError(t, "cannot use flag that starts with a hyphen: \"-e\"", func(t *testing.T, p *Parser) {
+		p.WithInt64Var(&b, "-e", "some example flag")
 	})
-	ensurePanic(t, "cannot use flag that starts with a hyphen: \"--example\"", func() {
-		_ = Int64("--example", 0, "some example flag")
+	ensureParserError(t, "cannot use flag that starts with a hyphen: \"--example\"", func(t *testing.T, p *Parser) {
+		p.WithInt64Var(&b, "--example", "some example flag")
 	})
 }
 
 func TestParseInt64MissingArgument(t *testing.T) {
+	var p Parser
+	var a int64
+	var b int64
+	p.WithInt64VarP(&a, 't', "little", "little")
+	p.WithInt64VarP(&b, 'T', "big", "big")
+
 	t.Run("short", func(t *testing.T) {
-		resetParser()
-		a := Int64("t", 0, "little")
-		b := Int64("T", 0, "big")
-
-		if got, want := parseArgs([]string{"-t"}), "flag requires argument: 't'"; got.Error() != want {
+		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
+		if got, want := a, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(0); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("long", func(t *testing.T) {
-		resetParser()
-		a := Int64("little", 0, "little")
-		b := Int64("big", 0, "big")
-
-		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
+		ensureError(t, p.Parse([]string{"--little"}), "flag requires argument")
+		if got, want := a, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(0); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 }
 
 func TestParseInt64ShortOption(t *testing.T) {
+	var p Parser
+	var a int64
+	var b int64
+	p.WithInt64Var(&a, "t", "little")
+	p.WithInt64Var(&b, "T", "big")
+
 	t.Run("single option with space", func(t *testing.T) {
-		resetParser()
-		a := Int64("t", 0, "little")
-		b := Int64("T", 0, "big")
-
-		if got, want := parseArgs([]string{"-t", "13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-t", "13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("single option without space", func(t *testing.T) {
-		resetParser()
-		a := Int64("t", 0, "little")
-		b := Int64("T", 0, "big")
-
-		if got, want := parseArgs([]string{"-t13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-t13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options without spaces", func(t *testing.T) {
-		resetParser()
-		a := Int64("t", 0, "little")
-		b := Int64("T", 0, "big")
-
-		if got, want := parseArgs([]string{"-t13", "-T42"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-t13", "-T42"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options with spaces reversed", func(t *testing.T) {
-		resetParser()
-		a := Int64("t", 0, "little")
-		b := Int64("T", 0, "big")
-
-		if got, want := parseArgs([]string{"-T", "42", "-t", "13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-T", "42", "-t", "13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options with out spaces reversed", func(t *testing.T) {
-		resetParser()
-		a := Int64("t", 0, "little")
-		b := Int64("T", 0, "big")
-
-		if got, want := parseArgs([]string{"-T42", "-t13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-T42", "-t13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 }
 
 func TestParseInt64LongOption(t *testing.T) {
+	var p Parser
+	var a int64
+	var b int64
+	p.WithInt64VarP(&a, 't', "little", "little")
+	p.WithInt64VarP(&b, 'T', "big", "big")
+
 	t.Run("both options", func(t *testing.T) {
-		resetParser()
-		a := Int64("little", 0, "little")
-		b := Int64("big", 0, "big")
-
-		if got, want := parseArgs([]string{"--little", "13", "--big", "42"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"--little", "13", "--big", "42"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options reversed", func(t *testing.T) {
-		resetParser()
-		a := Int64("little", 0, "little")
-		b := Int64("big", 0, "big")
-
-		if got, want := parseArgs([]string{"--big", "42", "--little", "13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"--big", "42", "--little", "13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 }
 
 func TestInt64PInvalid(t *testing.T) {
-	ensurePanic(t, "cannot use flag with invalid rune", func() {
-		_ = Int64P(utf8.RuneError, "", 13, "some example flag")
+	var a int64
+
+	ensureParserError(t, "cannot use flag with invalid rune", func(t *testing.T, p *Parser) {
+		p.WithInt64VarP(&a, utf8.RuneError, "", "some example flag")
 	})
-	ensurePanic(t, "cannot use hyphen as a flag", func() {
-		_ = Int64P('-', "example", 13, "some example flag")
+	ensureParserError(t, "cannot use empty flag", func(t *testing.T, p *Parser) {
+		p.WithInt64VarP(&a, 'b', "", "some example flag")
 	})
-	ensurePanic(t, "cannot use empty flag", func() {
-		_ = Int64P('b', "", 13, "some example flag")
+	ensureParserError(t, "cannot use hyphen as a flag", func(t *testing.T, p *Parser) {
+		p.WithInt64VarP(&a, '-', "example", "some example flag")
 	})
-	ensurePanic(t, "cannot use flag that starts with a hyphen", func() {
-		_ = Int64P('e', "--example", 13, "some example flag")
+	ensureParserError(t, "cannot use flag that starts with a hyphen", func(t *testing.T, p *Parser) {
+		p.WithInt64VarP(&a, 'e', "--example", "some example flag")
 	})
 }
 
 func TestParseInt64PMissingArgument(t *testing.T) {
+	var p Parser
+	var a int64
+	var b int64
+	p.WithInt64VarP(&a, 't', "little", "little")
+	p.WithInt64VarP(&b, 'T', "big", "big")
+
 	t.Run("short", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"-t"}), "flag requires argument: \"little\""; got.Error() != want {
+		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
+		if got, want := a, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(0); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("long", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"--little"}), "flag requires argument: \"little\""; got.Error() != want {
+		ensureError(t, p.Parse([]string{"--little"}), "flag requires argument")
+		if got, want := a, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(0); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 }
 
 func TestParseInt64PShortOption(t *testing.T) {
+	var p Parser
+	var a int64
+	var b int64
+	p.WithInt64Var(&a, "t", "little")
+	p.WithInt64Var(&b, "T", "big")
+
 	t.Run("single option with space", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"-t", "13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-t", "13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("single option without space", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"-t13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-t13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(0); got != want {
+		if got, want := b, int64(0); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options without spaces", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"-t13", "-T42"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-t13", "-T42"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options with spaces reversed", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"-T", "42", "-t", "13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-T", "42", "-t", "13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options with out spaces reversed", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"-T42", "-t13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"-T42", "-t13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 }
 
 func TestParseInt64PLongOption(t *testing.T) {
+	var p Parser
+	var a int64
+	var b int64
+	p.WithInt64VarP(&a, 't', "little", "little")
+	p.WithInt64VarP(&b, 'T', "big", "big")
+
 	t.Run("both options", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"--little", "13", "--big", "42"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"--little", "13", "--big", "42"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
 
 	t.Run("both options reversed", func(t *testing.T) {
-		resetParser()
-		a := Int64P('t', "little", 0, "little")
-		b := Int64P('T', "big", 0, "big")
-
-		if got, want := parseArgs([]string{"--big", "42", "--little", "13"}), error(nil); got != want {
+		ensureError(t, p.Parse([]string{"--big", "42", "--little", "13"}))
+		if got, want := a, int64(13); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-
-		if got, want := *a, int64(13); got != want {
-			t.Errorf("GOT: %v; WANT: %v", got, want)
-		}
-
-		if got, want := *b, int64(42); got != want {
+		if got, want := b, int64(42); got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 	})
