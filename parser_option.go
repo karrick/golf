@@ -454,6 +454,28 @@ func (p *Parser) WithUintVarP(pv *uint, short rune, long string, description str
 	return p
 }
 
+// WithUint64 returns a pouinter to a uint64 command line option, allowing for
+// either a short or a long flag. If both are desired, use the Uint64P function.
+func (p *Parser) WithUint64(flag string, value uint64, description string) *uint64 {
+	v := value
+	p.WithUint64Var(&v, flag, description)
+	if err := p.Err(); err != nil {
+		panic(err)
+	}
+	return &v
+}
+
+// WithUint64P returns a pouinter to a uint64 command line option, allowing for
+// both a short and a long flag.
+func (p *Parser) WithUint64P(short rune, long string, value uint64, description string) *uint64 {
+	v := value
+	p.WithUint64VarP(&v, short, long, description)
+	if err := p.Err(); err != nil {
+		panic(err)
+	}
+	return &v
+}
+
 // WithUint64Var updates the Parser to recognize flag as a uint64 with the
 // default value and description.
 func (p *Parser) WithUint64Var(pv *uint64, flag string, description string) *Parser {

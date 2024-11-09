@@ -6,12 +6,11 @@ parser.
 ## Description
 
 golf is a modest options parsing library for Go command line interface
-programs. Meant to be small, like flag included in Go's standard
-library, golf does not re-architect how you make command line
-programs, nor request you use a DSL for describing your command line
-program. It merely allows you to specify which options your program
-accepts, and provides the values to your program based on the user's
-arguments.
+programs. Meant to be small, like flag included in Go's standard library, golf
+does not re-architect how you make command line programs, nor request you use
+a DSL for describing your command line program. It merely allows you to
+specify which options your program accepts, and provides the values to your
+program based on the user's arguments.
 
 * Fully POSIX-compliant flags, including short & long flags.
 * Helpful functions for printing help and usage information.
@@ -20,35 +19,158 @@ arguments.
 * Supports GNU extension allowing flags to appear intermixed with
   other command line arguments.
 
-## Usage Example
+## Usage
 
 Documentation is available via
 [![GoDoc](https://godoc.org/github.com/karrick/golf?status.svg)](https://godoc.org/github.com/karrick/golf).
 
-Basic usage is nearly identical to the standard library flag
-package. There are only a very small set of features this library does
-not support from the flag library. However, it provides all the
-functions that most command line programs would require.
+### Drop-In Example
 
-golf is designed such that you can change every flag package prefix to
-golf, recompile your program, and be able to use more POSIX friendly
-command line options. Both Type and TypeVar style flag declarations
-are supported, as shown below:
-
-```Go
-var optVerbose bool
-
-optLimit := golf.Int("limit", 0, "Limit output to specified number of lines")
-golf.BoolVar(&optVerbose, "v", false, "Display verbose output")
-
-golf.Parse()
-```
-
-When the flag package prefix is changed to golf, your program will
-require a single-hyphen when the flag name is one rune long, and a
-double-hyphen prefix when the flag is more than one rune long.
+When the flag package prefix is changed to golf, your program will require a
+single-hyphen when the flag name is one rune long, and a double-hyphen prefix
+when the flag is more than one rune long.
 
     $ example -v --limit 3
+
+Drop-in compatibiliy usage is nearly identical to the standard library flag
+package, with a few additions for supporting flags with both short and long
+style options, albeit with a few features from the standard library not
+supported. However, it provides all the functions that most command line
+programs would require.
+
+golf is designed such that you can change every flag package prefix to golf,
+recompile your program, and be able to use more POSIX friendly command line
+options. Both Type and TypeVar style flag declarations are supported, as shown
+below:
+
+```Go
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/karrick/golf"
+)
+
+// VersionString can be overridden during the build with command line parameters.
+var VersionString = "1.2.3"
+
+func main() {
+	optHelp := golf.BoolP('h', "help", false, "Display command line help and exit")
+	optLimit := golf.IntP('l', "limit", 0, "Limit output to specified number of lines")
+	optQuiet := golf.BoolP('q', "quiet", false, "Do not print intermediate errors to stderr")
+	optVerbose := golf.BoolP('v', "verbose", false, "Print verbose output to stderr")
+	optVersion := golf.BoolP('V', "version", false, "Print version to stderr and exit")
+
+	_ = golf.StringP('s', "servers", "host1,host2", "Some string")
+	_ = golf.String("t", "host3,host4", "Another string")
+	_ = golf.String("flubbers", "host5", "Yet another string")
+
+	golf.Parse()
+
+	if *optHelp || *optVersion {
+		fmt.Fprintf(os.Stderr, "%s version %s\n", filepath.Base(os.Args[0]), VersionString)
+		if *optHelp {
+			fmt.Fprintf(os.Stderr, "\texample program to demonstrate library usage\n\n")
+			golf.Usage()
+		}
+		os.Exit(0)
+	}
+
+	fmt.Fprintf(os.Stderr, "# os.Args: %v\n", os.Args)
+	fmt.Fprintf(os.Stderr, "# golf.Args(): %v\n", golf.Args())
+	fmt.Fprintf(os.Stderr, "# golf.NArg(): %v\n", golf.NArg())
+	fmt.Fprintf(os.Stderr, "# golf.Arg(0): %v\n", golf.Arg(0))
+
+	fmt.Fprintf(os.Stderr, "# limit: %v\n", *optLimit)
+	fmt.Fprintf(os.Stderr, "# quiet: %t\n", *optQuiet)
+	fmt.Fprintf(os.Stderr, "# verbose: %t\n", *optVerbose)
+}
+```
+
+### Parser
+
+golf also provides support for one or more non-global golf.Parser instances,
+so different golf.Parser instances can be created to parse different
+combinations of options, for instance, when different sub-commands support
+differing sets of options.
+
+```Go
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/karrick/golf"
+)
+
+// VersionString can be overridden during the build with command line parameters.
+var VersionString = "1.2.3"
+
+func main() {
+	var err error
+
+	args := os.Args
+
+	if len(args) == 1 {
+		fmt.Fprintf(os.Stderr, "USAGE %s foo [-b] [-d DURATION]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "USAGE %s bar [-i INT] [-s STRING ]\n", filepath.Base(os.Args[0]))
+		os.Exit(2)
+	}
+
+	switch args[1] {
+	case "foo":
+		foo(os.Args[1:])
+	case "bar":
+		foo(os.Args[1:])
+	default:
+		fmt.Fprintf(os.Stderr, "USAGE %s [foo|bar]\n", filepath.Base(os.Args[0]))
+		os.Exit(2)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
+		os.Exit(2)
+	}
+
+}
+
+func foo(args []string) {
+	var p golf.Parser
+	optBool := p.WithBool("b", false, "some bool")
+	optDuration := p.WithDurationP('d', "duration", 0, "some duration")
+	err := p.Parse(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
+		os.Exit(2)
+	}
+	fmt.Println("optBool:", *optBool)
+	fmt.Println("optDuration:", *optDuration)
+	for i, arg := range p.Args() {
+		fmt.Fprintf(os.Stderr, "# %d: %s\n", i, arg)
+	}
+}
+
+func bar(args []string) {
+	var p golf.Parser
+	optInt := p.WithInt("i", 0, "some int")
+	optString := p.WithString("s", "", "some string")
+	err := p.Parse(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
+		os.Exit(2)
+	}
+	fmt.Println("optInt:", *optInt)
+	fmt.Println("optString:", *optString)
+	for i, arg := range p.Args() {
+		fmt.Fprintf(os.Stderr, "# %d: %s\n", i, arg)
+	}
+}
+```
 
 ## Features
 
