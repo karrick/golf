@@ -2,43 +2,32 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/karrick/golf"
 )
 
-// VersionString can be overridden during the build with command line parameters.
-var VersionString = "1.2.3"
-
 func main() {
-	optHelp := golf.BoolP('h', "help", false, "Display command line help and exit")
-	optLimit := golf.IntP('l', "limit", 0, "Limit output to specified number of lines")
-	optQuiet := golf.BoolP('q', "quiet", false, "Do not print intermediate errors to stderr")
-	optVerbose := golf.BoolP('v', "verbose", false, "Print verbose output to stderr")
-	optVersion := golf.BoolP('V', "version", false, "Print version to stderr and exit")
+	// The difference between Type and TypeP is Type accepts a single flag,
+	// whereas TypeP accepts two flags, one as a rune and the other as a
+	// string.
+	//
+	// NOTE: When using Type, use double-quotes for the flag name even when
+	// providing a single rune. When using TypeP, use single quotes for the
+	// run and double-quotes for the long flag name.
+	optType := golf.Bool("b", false, "optType takes a single flag and returns a pointer to a variable")
+	optTypeP := golf.DurationP('d', "duration", 0, "optTypeP takes a rune and a string and returns a pointer to a variable")
 
-	_ = golf.StringP('s', "servers", "host1,host2", "Some string")
-	_ = golf.String("t", "host3,host4", "Another string")
-	_ = golf.String("flubbers", "host5", "Yet another string")
+	// The difference between Type and TypeVar is Type returns a pointer to a
+	// variable, whereas TypeVar accepts a pointer to a variable.
+	var optTypeVar float64
+	golf.FloatVar(&optTypeVar, "f", 6.02e-23, "optTypeVar takes a pointer to a variable and a single flag")
 
-	golf.Parse()
+	var optTypeVarP int64
+	golf.Int64VarP(&optTypeVarP, 'i', "int64", 13, "optTypeVarP takes a pointer to a variable, a rune, and a string")
 
-	if *optHelp || *optVersion {
-		fmt.Fprintf(os.Stderr, "%s version %s\n", filepath.Base(os.Args[0]), VersionString)
-		if *optHelp {
-			fmt.Fprintf(os.Stderr, "\texample program to demonstrate library usage\n\n")
-			golf.Usage()
-		}
-		os.Exit(0)
-	}
+	fmt.Println("optType: ", *optType)
+	fmt.Println("optTypeP: ", *optTypeP)
 
-	fmt.Fprintf(os.Stderr, "# os.Args: %v\n", os.Args)
-	fmt.Fprintf(os.Stderr, "# golf.Args(): %v\n", golf.Args())
-	fmt.Fprintf(os.Stderr, "# golf.NArg(): %v\n", golf.NArg())
-	fmt.Fprintf(os.Stderr, "# golf.Arg(0): %v\n", golf.Arg(0))
-
-	fmt.Fprintf(os.Stderr, "# limit: %v\n", *optLimit)
-	fmt.Fprintf(os.Stderr, "# quiet: %t\n", *optQuiet)
-	fmt.Fprintf(os.Stderr, "# verbose: %t\n", *optVerbose)
+	fmt.Println("optTypeVar: ", optTypeVar)
+	fmt.Println("optTypeVarP: ", optTypeVarP)
 }
