@@ -95,18 +95,19 @@ func (p *Parser) Parse(args []string) error {
 	// reset parser
 	p.argsProcessed = 0
 	p.remainingArguments = p.remainingArguments[:0]
-	p.parsed = false
+	p.parsed = true
 
 	var flagType slurpType
 	var flagName, flagText string
 	var f option
 
 	for ai, arg := range args { // ai (arg index)
-		// fmt.Fprintf(os.Stderr, "arg %d: %q; start argParserState: %v\n", ai, arg, flagType)
+		debug("arg %d: %q; start argParserState: %v\n", ai, arg, flagType)
 
 		if flagType != nothingToSlurp {
-			if err := slurpText(arg, flagType, f); err != nil {
-				return err
+			p.err = slurpText(arg, flagType, f)
+			if p.err != nil {
+				return p.err
 			}
 			flagType = nothingToSlurp
 			p.argsProcessed++
@@ -118,22 +119,24 @@ func (p *Parser) Parse(args []string) error {
 		flagText = ""
 
 		for bi, r := range arg { // bi (byte index)
-			// fmt.Fprintf(os.Stderr, "  runeParserState: %v; rune: %q\n", runeParserState, r)
+			debug("  runeParserState: %v; rune: %q\n", runeParserState, r)
 
-			// NOTE: Cannot put this in switch statement because break we might
-			// need to break out of enclosing for statement that loops over arg
-			// runes.
+			// NOTE: Cannot put this in switch statement because this needs
+			// need to be able to break out of enclosing for statement that
+			// loops over arg runes, and continue processing not the next
+			// argument, but with the switch statement following this inner
+			// loop.
 			if runeParserState == wantText {
 				flagText = arg[bi:]
-				// fmt.Fprintf(os.Stderr, "  FLAG TEXT: %q\n", flagText)
+				debug("  FLAG TEXT: %q\n", flagText)
 				break // out of parsing this arg
 			} else if runeParserState == wantLongName {
 				flagName = arg[bi:]
-				// fmt.Fprintf(os.Stderr, "  LONG FLAG NAME: %q\n", flagName)
+				debug("  LONG FLAG NAME: %q\n", flagName)
 				break // out of parsing this arg
 			} else if runeParserState == beginArgument {
 				if r != '-' {
-					// fmt.Fprintf(os.Stderr, "index: %d; this rune ends processing: %q\n", ai, r)
+					debug("index: %d; this rune ends processing: %q\n", ai, r)
 					// remainingArguments = args[ai:]
 					// argsProcessed = ai
 					// return nil
@@ -148,7 +151,8 @@ func (p *Parser) Parse(args []string) error {
 				default:
 					if f = p.flagFromShortName(r); f == nil {
 						p.argsProcessed = ai
-						return fmt.Errorf("unknown flag: %q", r)
+						p.err = fmt.Errorf("unknown flag: %q", r)
+						return p.err
 					}
 					switch flagType = f.NextSlurp(); flagType {
 					case nothingToSlurp:
@@ -161,7 +165,8 @@ func (p *Parser) Parse(args []string) error {
 			} else if runeParserState == wantShortFlagsOnly {
 				if f = p.flagFromShortName(r); f == nil {
 					p.argsProcessed = ai
-					return fmt.Errorf("unknown flag: %q", r)
+					p.err = fmt.Errorf("unknown flag: %q", r)
+					return p.err
 				}
 				switch flagType = f.NextSlurp(); flagType {
 				case nothingToSlurp:
@@ -174,61 +179,72 @@ func (p *Parser) Parse(args []string) error {
 			}
 		}
 
+		debug("  POST: runeParserState: %v\n", runeParserState)
+
 		switch runeParserState {
 		case consumedHyphen:
 			p.argsProcessed = ai
-			return errors.New("hyphen without flags")
+			p.err = errors.New("hyphen without flags")
+			return p.err
 		case wantArgument:
 			p.remainingArguments = append(p.remainingArguments, arg)
 		case wantText:
 			if flagText == "" {
-				// fmt.Fprintf(os.Stderr, "  finished arg and got no text: %q\n", flagText)
+				debug("  finished arg and got no text: %q\n", flagText)
 				p.argsProcessed++
 				continue // with next arg, where we will slurp in the value
 			}
-			// fmt.Fprintf(os.Stderr, "  finished arg and got text: %q\n", flagText)
+			debug("  finished arg and got text: %q\n", flagText)
 			if flagType == nothingToSlurp {
 				panic(fmt.Errorf("got text %q but invalid nextSlurp: %v", flagText, flagType))
 			}
-			if err := slurpText(flagText, flagType, f); err != nil {
-				return err
+			p.err = slurpText(flagText, flagType, f)
+			if p.err != nil {
+				return p.err
 			}
 			flagType = nothingToSlurp
 			p.argsProcessed++
 		case wantShortFlagsOnly:
-			// fmt.Fprintf(os.Stderr, "  finished arg while looking for short flags\n")
+			debug("  finished arg while looking for short flags\n")
 			p.argsProcessed++
 		case wantLongName:
 			if flagName == "" {
+				p.argsProcessed = ai + 1
+				p.remainingArguments = args[p.argsProcessed:]
 				return nil
 			}
 			if f = p.flagFromLongName(flagName); f == nil {
 				p.argsProcessed = ai
-				return fmt.Errorf("unknown flag: %q", flagName)
+				p.err = fmt.Errorf("unknown flag: %q", flagName)
+				return p.err
 			}
+			flagName = "" // reset
 			if flagType = f.NextSlurp(); flagType == nothingToSlurp {
 				*f.(*optionBool).pv = true
 			}
 			p.argsProcessed++
 		default:
-			panic(fmt.Errorf("TODO: handle runeParserState: %v", runeParserState))
+			p.err = fmt.Errorf("TODO: handle runeParserState: %v", runeParserState)
+			return p.err
 		}
 
 		// POST: end of an indexed argument
-		// fmt.Fprintf(os.Stderr, "arg %d: %q end argParserState: %v\n", ai, arg, flagType)
+		// debug("arg %d: %q end argParserState: %v\n", ai, arg, flagType)
+		debug("  POST: %q end argParserState: %v\n", arg, flagType)
 	}
 
-	// fmt.Fprintf(os.Stderr, "after all args: %v\n", flagType)
+	debug("after all args: %v\n", flagType)
 
 	// we might have hit the end of the command line while doing stuff
 	if flagType != nothingToSlurp {
 		if long := f.Long(); long != "" {
-			return fmt.Errorf("flag requires argument: %q", long)
+			p.err = fmt.Errorf("flag requires argument: %q", long)
+			return p.err
 		}
-		return fmt.Errorf("flag requires argument: %q", f.Short())
+		p.err = fmt.Errorf("flag requires argument: %q", f.Short())
+		return p.err
 	}
 
-	p.parsed = true
 	return nil
 }
 

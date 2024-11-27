@@ -82,17 +82,20 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 		WithIntVarP(&i, 'l', "limit", "limit results").
 		WithStringVarP(&s, 's', "servers", "ask servers")
 
-	err := p.Parse([]string{"-l4", "some", "--", "--verbose", "other", "arguments"})
+	err := p.Parse([]string{"--limit", "4", "--verbose", "--", "--servers", "host1,host2", "some", "other", "arguments"})
 	ensureError(t, err)
 
-	if got, want := b, false; got != want {
+	if got, want := b, true; got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 	if got, want := i, 4; got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
+	if got, want := s, ""; got != want {
+		t.Errorf("GOT: %q; WANT: %q", got, want)
+	}
 
-	ensureStringSlicesMatch(t, p.Args(), []string{"some"})
+	ensureStringSlicesMatch(t, p.Args(), []string{"--servers", "host1,host2", "some", "other", "arguments"})
 }
 
 func TestParseConfused(t *testing.T) {
