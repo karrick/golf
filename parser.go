@@ -221,6 +221,7 @@ func (p *Parser) Parse(args []string) error {
 			p.argsProcessed++
 		case wantLongName:
 			if flagName == "" {
+				// double-hyphen: remaining arguments everything after this
 				p.argsProcessed++
 				p.parsed = true
 				p.remainingArguments = args[ai+1:]
