@@ -12,31 +12,21 @@ import (
 var VersionString = "1.2.3"
 
 func main() {
-	var err error
-
-	args := os.Args
-
-	if len(args) == 1 {
+	if len(os.Args) == 1 {
 		fmt.Fprintf(os.Stderr, "USAGE %s foo [-b] [-d DURATION]\n", filepath.Base(os.Args[0]))
 		fmt.Fprintf(os.Stderr, "USAGE %s bar [-i INT] [-s STRING ]\n", filepath.Base(os.Args[0]))
 		os.Exit(2)
 	}
 
-	switch args[1] {
+	switch os.Args[1] {
 	case "foo":
 		foo(os.Args[1:])
 	case "bar":
-		foo(os.Args[1:])
+		bar(os.Args[1:])
 	default:
 		fmt.Fprintf(os.Stderr, "USAGE %s [foo|bar]\n", filepath.Base(os.Args[0]))
 		os.Exit(2)
 	}
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
-		os.Exit(2)
-	}
-
 }
 
 func foo(args []string) {
