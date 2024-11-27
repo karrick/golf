@@ -46,35 +46,35 @@ below:
 package main
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/karrick/golf"
+    "github.com/karrick/golf"
 )
 
 func main() {
-	// The difference between Type and TypeP is Type accepts a single flag,
-	// whereas TypeP accepts two flags, one as a rune and the other as a
-	// string.
-	//
-	// NOTE: When using Type, use double-quotes for the flag name even when
-	// providing a single rune. When using TypeP, use single quotes for the
-	// run and double-quotes for the long flag name.
-	optType := golf.Bool("b", false, "optType takes a single flag and returns a pointer to a variable")
-	optTypeP := golf.DurationP('d', "duration", 0, "optTypeP takes a rune and a string and returns a pointer to a variable")
+    // The difference between Type and TypeP is Type accepts a single flag,
+    // whereas TypeP accepts two flags, one as a rune and the other as a
+    // string.
+    //
+    // NOTE: When using Type, use double-quotes for the flag name even when
+    // providing a single rune. When using TypeP, use single quotes for the
+    // run and double-quotes for the long flag name.
+    optType := golf.Bool("b", false, "optType takes a single flag and returns a pointer to a variable")
+    optTypeP := golf.DurationP('d', "duration", 0, "optTypeP takes a rune and a string and returns a pointer to a variable")
 
-	// The difference between Type and TypeVar is Type returns a pointer to a
-	// variable, whereas TypeVar accepts a pointer to a variable.
-	var optTypeVar float64
-	golf.FloatVar(&optTypeVar, "f", 6.02e-23, "optTypeVar takes a pointer to a variable and a single flag")
+    // The difference between Type and TypeVar is Type returns a pointer to a
+    // variable, whereas TypeVar accepts a pointer to a variable.
+    var optTypeVar float64
+    golf.FloatVar(&optTypeVar, "f", 6.02e-23, "optTypeVar takes a pointer to a variable and a single flag")
 
-	var optTypeVarP int64
-	golf.Int64VarP(&optTypeVarP, 'i', "int64", 13, "optTypeVarP takes a pointer to a variable, a rune, and a string")
+    var optTypeVarP int64
+    golf.Int64VarP(&optTypeVarP, 'i', "int64", 13, "optTypeVarP takes a pointer to a variable, a rune, and a string")
 
-	fmt.Println("optType: ", *optType)
-	fmt.Println("optTypeP: ", *optTypeP)
+    fmt.Println("optType: ", *optType)
+    fmt.Println("optTypeP: ", *optTypeP)
 
-	fmt.Println("optTypeVar: ", optTypeVar)
-	fmt.Println("optTypeVarP: ", optTypeVarP)
+    fmt.Println("optTypeVar: ", optTypeVar)
+    fmt.Println("optTypeVarP: ", optTypeVarP)
 }
 ```
 
@@ -89,74 +89,74 @@ differing sets of options.
 package main
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
+    "fmt"
+    "os"
+    "path/filepath"
 
-	"github.com/karrick/golf"
+    "github.com/karrick/golf"
 )
 
 // VersionString can be overridden during the build with command line parameters.
 var VersionString = "1.2.3"
 
 func main() {
-	var err error
+    var err error
 
-	args := os.Args
+    args := os.Args
 
-	if len(args) == 1 {
-		fmt.Fprintf(os.Stderr, "USAGE %s foo [-b] [-d DURATION]\n", filepath.Base(os.Args[0]))
-		fmt.Fprintf(os.Stderr, "USAGE %s bar [-i INT] [-s STRING ]\n", filepath.Base(os.Args[0]))
-		os.Exit(2)
-	}
+    if len(args) == 1 {
+        fmt.Fprintf(os.Stderr, "USAGE %s foo [-b] [-d DURATION]\n", filepath.Base(os.Args[0]))
+        fmt.Fprintf(os.Stderr, "USAGE %s bar [-i INT] [-s STRING ]\n", filepath.Base(os.Args[0]))
+        os.Exit(2)
+    }
 
-	switch args[1] {
-	case "foo":
-		foo(os.Args[1:])
-	case "bar":
-		foo(os.Args[1:])
-	default:
-		fmt.Fprintf(os.Stderr, "USAGE %s [foo|bar]\n", filepath.Base(os.Args[0]))
-		os.Exit(2)
-	}
+    switch args[1] {
+    case "foo":
+        foo(os.Args[1:])
+    case "bar":
+        foo(os.Args[1:])
+    default:
+        fmt.Fprintf(os.Stderr, "USAGE %s [foo|bar]\n", filepath.Base(os.Args[0]))
+        os.Exit(2)
+    }
 
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
-		os.Exit(2)
-	}
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
+        os.Exit(2)
+    }
 
 }
 
 func foo(args []string) {
-	var p golf.Parser
-	optBool := p.WithBool("b", false, "some bool")
-	optDuration := p.WithDurationP('d', "duration", 0, "some duration")
-	err := p.Parse(args)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
-		os.Exit(2)
-	}
-	fmt.Println("optBool:", *optBool)
-	fmt.Println("optDuration:", *optDuration)
-	for i, arg := range p.Args() {
-		fmt.Fprintf(os.Stderr, "# %d: %s\n", i, arg)
-	}
+    var p golf.Parser
+    optBool := p.WithBool("b", false, "some bool")
+    optDuration := p.WithDurationP('d', "duration", 0, "some duration")
+    err := p.Parse(args)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
+        os.Exit(2)
+    }
+    fmt.Println("optBool:", *optBool)
+    fmt.Println("optDuration:", *optDuration)
+    for i, arg := range p.Args() {
+        fmt.Fprintf(os.Stderr, "# %d: %s\n", i, arg)
+    }
 }
 
 func bar(args []string) {
-	var p golf.Parser
-	optInt := p.WithInt("i", 0, "some int")
-	optString := p.WithString("s", "", "some string")
-	err := p.Parse(args)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
-		os.Exit(2)
-	}
-	fmt.Println("optInt:", *optInt)
-	fmt.Println("optString:", *optString)
-	for i, arg := range p.Args() {
-		fmt.Fprintf(os.Stderr, "# %d: %s\n", i, arg)
-	}
+    var p golf.Parser
+    optInt := p.WithInt("i", 0, "some int")
+    optString := p.WithString("s", "", "some string")
+    err := p.Parse(args)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "%s: %s\n", filepath.Base(os.Args[0]), err)
+        os.Exit(2)
+    }
+    fmt.Println("optInt:", *optInt)
+    fmt.Println("optString:", *optString)
+    for i, arg := range p.Args() {
+        fmt.Fprintf(os.Stderr, "# %d: %s\n", i, arg)
+    }
 }
 ```
 
@@ -180,18 +180,18 @@ golf.Parse()
 
 All of the below examples result in the same flag values being set:
 
-	$ example -sfoo.example.com -t3.14
-	$ example -s foo.example.com -t 3.14
-	$ example --server foo.example.com --threshold 3.14
+    $ example -sfoo.example.com -t3.14
+    $ example -s foo.example.com -t 3.14
+    $ example --server foo.example.com --threshold 3.14
 
 golf allows boolean options to be grouped together when using their
 single letter equivalents, such as common in many UNIX programs. all
 of the following are equivalent:
 
-	$ example -rv -t 4 -shost.example.com
-	$ example -rv -t4 -s host.example.com
-	$ example -rv --threshold 4 --server host.example.com
-	$ example -v -r --threshold 4 --server host.example.com
+    $ example -rv -t 4 -shost.example.com
+    $ example -rv -t4 -s host.example.com
+    $ example -rv --threshold 4 --server host.example.com
+    $ example -v -r --threshold 4 --server host.example.com
 
 golf also allow concatenation of one or more boolean short flags with
 at most one short flag that requires an argument provided the flag
@@ -200,8 +200,8 @@ the following are legal, although the second example happens to parse
 oddly in my brain, because v and t appear grouped closer than the t
 and the 4. Nevertheless, both are equivalent and unambiguous:
 
-	$ example -vt4
-	$ example -vt 4
+    $ example -vt4
+    $ example -vt 4
 
 To prevent ambiguities, however, golf does not allow placing any
 additional flags after a flag that requires an argument, even if it
@@ -209,12 +209,12 @@ may appear to be legal, in the same argument. For instance, if the i
 takes an integer and the s flag takes a string, this will still result
 in a parsing error:
 
-	$ example -i4sfoo.example.com
-	ERROR: strconv.ParseInt: parsing "4sfoo.example.com": invalid syntax
+    $ example -i4sfoo.example.com
+    ERROR: strconv.ParseInt: parsing "4sfoo.example.com": invalid syntax
 
 This however is legal:
 
-	$ example -i4 -sfoo.example.com
+    $ example -i4 -sfoo.example.com
 
 In an attempt to be largely compatible with the flag library,
 specifying an option flag has no error return value, so attempting to
@@ -228,9 +228,9 @@ parsing that allows command line flags and command line arguments to
 be intermixed. For instance, the following invocations would be
 equivalent.
 
-	$ example -t 3.14 arg1 arg2
-	$ example arg1 -t3.14 arg2
-	$ example arg1 arg2 -t 3.14
+    $ example -t 3.14 arg1 arg2
+    $ example arg1 -t3.14 arg2
+    $ example arg1 arg2 -t 3.14
 
 ## Help Example
 
@@ -246,25 +246,25 @@ followed by the description and the default value for that flag.
 
 ```
 example version 1.2.3
-	example program
+    example program
 
 Usage of example:
   -h, --help
-	Display command line help and exit (default: false)
+    Display command line help and exit (default: false)
   -l, --limit int
-	Limit output to specified number of lines (default: 0)
+    Limit output to specified number of lines (default: 0)
   -q, --quiet
-	Do not print intermediate errors to stderr (default: false)
+    Do not print intermediate errors to stderr (default: false)
   -v, --verbose
-	Print verbose output to stderr (default: false)
+    Print verbose output to stderr (default: false)
   -V, --version
-	Print version to stderr and exit (default: false)
+    Print version to stderr and exit (default: false)
   -s, --servers string
-	Some string (default: host1,host2)
+    Some string (default: host1,host2)
   -t string
-	Another string (default: host3,host4)
+    Another string (default: host3,host4)
   --flubbers string
-	Yet another string (default: host5)
+    Yet another string (default: host5)
 ```
 
 ## TODO
