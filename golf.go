@@ -17,8 +17,8 @@ func init() {
 var dw = LineWrapper{Max: 80, Prefix: "    "}
 
 // Arg returns the i'th command-line argument. Arg(0) is the first remaining
-// argument after flags have been processed. Arg returns an empty string if the
-// requested element does not exist.
+// argument after flags have been processed. Arg returns an empty string if
+// the requested element does not exist.
 func Arg(i int) string {
 	return defaultParser.Arg(i)
 }
@@ -34,7 +34,7 @@ func NArg() int {
 	return defaultParser.NArg()
 }
 
-// NFlag returns the number of command-line flags that have been set.
+// NFlag returns the number of command-line flags that have been processed.
 func NFlag() int {
 	return defaultParser.NFlag()
 }

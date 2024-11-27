@@ -1,6 +1,7 @@
 package golf
 
 import "time"
+import "fmt"
 
 // WithBool returns a pointer to a bool command line option, allowing for
 // either a short or a long flag. If both are desired, use the BoolP function.
@@ -30,18 +31,18 @@ func (p *Parser) WithBoolVar(pv *bool, flag string, description string) *Parser 
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionBool{
+	p.options = append(p.options, &optionBool{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -56,12 +57,12 @@ func (p *Parser) WithBoolVarP(pv *bool, short rune, long string, description str
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionBool{
+	p.options = append(p.options, &optionBool{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -95,18 +96,18 @@ func (p *Parser) WithDurationVar(pv *time.Duration, flag string, description str
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionDuration{
+	p.options = append(p.options, &optionDuration{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -121,12 +122,12 @@ func (p *Parser) WithDurationVarP(pv *time.Duration, short rune, long string, de
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionDuration{
+	p.options = append(p.options, &optionDuration{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -160,18 +161,18 @@ func (p *Parser) WithFloatVar(pv *float64, flag string, description string) *Par
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionFloat{
+	p.options = append(p.options, &optionFloat{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -186,12 +187,12 @@ func (p *Parser) WithFloatVarP(pv *float64, short rune, long string, description
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionFloat{
+	p.options = append(p.options, &optionFloat{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -224,18 +225,18 @@ func (p *Parser) WithIntVar(pv *int, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionInt{
+	p.options = append(p.options, &optionInt{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -250,12 +251,12 @@ func (p *Parser) WithIntVarP(pv *int, short rune, long string, description strin
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionInt{
+	p.options = append(p.options, &optionInt{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -289,18 +290,18 @@ func (p *Parser) WithInt64Var(pv *int64, flag string, description string) *Parse
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionInt64{
+	p.options = append(p.options, &optionInt64{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -315,12 +316,12 @@ func (p *Parser) WithInt64VarP(pv *int64, short rune, long string, description s
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionInt64{
+	p.options = append(p.options, &optionInt64{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -354,18 +355,18 @@ func (p *Parser) WithStringVar(pv *string, flag string, description string) *Par
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionString{
+	p.options = append(p.options, &optionString{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -380,12 +381,12 @@ func (p *Parser) WithStringVarP(pv *string, short rune, long string, description
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionString{
+	p.options = append(p.options, &optionString{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -418,18 +419,18 @@ func (p *Parser) WithUintVar(pv *uint, flag string, description string) *Parser 
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionUint{
+	p.options = append(p.options, &optionUint{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -444,12 +445,12 @@ func (p *Parser) WithUintVarP(pv *uint, short rune, long string, description str
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionUint{
+	p.options = append(p.options, &optionUint{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }
@@ -482,18 +483,18 @@ func (p *Parser) WithUint64Var(pv *uint64, flag string, description string) *Par
 	if p.err != nil {
 		return p
 	}
-	var short rune
+	var short string
 	var long string
 	short, long, p.err = p.parseSingleFlag(flag)
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionUint64{
+	p.options = append(p.options, &optionUint64{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       short,
 	})
 	return p
 }
@@ -508,12 +509,12 @@ func (p *Parser) WithUint64VarP(pv *uint64, short rune, long string, description
 	if p.err != nil {
 		return p
 	}
-	p.flags = append(p.flags, &optionUint64{
+	p.options = append(p.options, &optionUint64{
+		def:         *pv,
 		description: description,
 		long:        long,
-		short:       short,
 		pv:          pv,
-		def:         *pv,
+		short:       fmt.Sprintf("%c", short),
 	})
 	return p
 }

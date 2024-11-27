@@ -54,4 +54,3 @@ func init() {
 		isDebug = true
 	}
 }
-
