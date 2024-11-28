@@ -34,11 +34,18 @@ func main() {
 	var optTypeVarP int64
 	golf.Int64VarP(&optTypeVarP, 'i', "int64", 13, "optTypeVarP takes a pointer to a variable, a rune, and a string")
 
+	// After the options have been declared, the `golf.Parse()` function will
+	// parse the command line options from `os.Args`.
 	golf.Parse()
 
+	// Notice that the returned 'Type' and 'TypeP' functions return a pointer
+	// that must be referenced in order to obtain the value.
 	fmt.Println("optType: ", *optType1)
 	fmt.Println("optTypeP: ", *optTypeP)
 
+	// In contrast, the 'TypeVar' and 'TypeVarP' functions accept a pointer to
+	// the variable for the library to store its value, and accessing the
+	// value does not require a pointer dereference.
 	fmt.Println("optTypeVar: ", optTypeVar)
 	fmt.Println("optTypeVarP: ", optTypeVarP)
 }
