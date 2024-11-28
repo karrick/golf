@@ -85,6 +85,6 @@ func bail(err error) {
 	basename := filepath.Base(os.Args[0])
 	fmt.Fprintf(os.Stderr, "%s: %s\n", basename, err)
 	fmt.Fprintf(os.Stderr, "USAGE %s foo [-b] [-d DURATION]\n", basename)
-	fmt.Fprintf(os.Stderr, "USAGE %s bar [-i INT] [-s STRING ]\n", basename)
+	fmt.Fprintf(os.Stderr, "USAGE %s bar [-i INT] [-s STRING]\n", basename)
 	os.Exit(2)
 }
