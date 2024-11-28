@@ -42,6 +42,13 @@ func TestParseComplex(t *testing.T) {
 	}
 
 	ensureStringSlicesMatch(t, p.Args(), []string{"some", "other", "arguments"})
+
+	if got, want := p.NArg(), 3; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+	if got, want := p.NFlag(), 5; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
 }
 
 func TestParseComplexSomeFlagsAfterArgs(t *testing.T) {
@@ -55,7 +62,7 @@ func TestParseComplexSomeFlagsAfterArgs(t *testing.T) {
 		WithIntVarP(&i, 'l', "limit", "limit results").
 		WithStringVarP(&s, 's', "servers", "ask servers")
 
-	err := p.Parse([]string{"-l", "4", "some", "-v", "-s", "host1,host2", "other", "arguments"})
+	err := p.Parse([]string{"-l", "4", "some", "-v", "other", "-s", "host1,host2", "arguments"})
 	ensureError(t, err)
 
 	if got, want := b, true; got != want {
@@ -69,6 +76,13 @@ func TestParseComplexSomeFlagsAfterArgs(t *testing.T) {
 	}
 
 	ensureStringSlicesMatch(t, p.Args(), []string{"some", "other", "arguments"})
+
+	if got, want := p.NArg(), 3; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+	if got, want := p.NFlag(), 5; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
 }
 
 func TestParseStopsAfterDoubleHyphen(t *testing.T) {
@@ -96,6 +110,13 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	}
 
 	ensureStringSlicesMatch(t, p.Args(), []string{"--servers", "host1,host2", "some", "other", "arguments"})
+
+	if got, want := p.NArg(), 5; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+	if got, want := p.NFlag(), 4; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
 }
 
 func TestParseConfused(t *testing.T) {
@@ -109,13 +130,22 @@ func TestParseConfused(t *testing.T) {
 		WithIntVarP(&i, 'l', "limit", "limit results").
 		WithStringVarP(&s, 's', "servers", "ask servers")
 
-	err := p.Parse([]string{"-vl"})
+	err := p.Parse([]string{"-vs"})
 	ensureError(t, err, "flag requires argument")
 
 	if got, want := b, true; got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 	if got, want := i, 0; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+
+	ensureStringSlicesMatch(t, p.Args(), nil)
+
+	if got, want := p.NArg(), 0; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+	if got, want := p.NFlag(), 1; got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 }
@@ -138,6 +168,15 @@ func TestParseHyphenAfterShort(t *testing.T) {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 	if got, want := i, 0; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+
+	ensureStringSlicesMatch(t, p.Args(), []string{"-v-l"})
+
+	if got, want := p.NArg(), 1; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+	if got, want := p.NFlag(), 0; got != want {
 		t.Errorf("GOT: %v; WANT: %v", got, want)
 	}
 }
@@ -196,6 +235,15 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		if got, want := d, false; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
+
+		ensureStringSlicesMatch(t, p.Args(), nil)
+
+		if got, want := p.NArg(), 0; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := p.NFlag(), 4; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("without intervening space", func(t *testing.T) {
@@ -229,6 +277,15 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		if got, want := d, false; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
+
+		ensureStringSlicesMatch(t, p.Args(), nil)
+
+		if got, want := p.NArg(), 0; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
+		if got, want := p.NFlag(), 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 }
 
@@ -238,10 +295,14 @@ func TestParseArgs(t *testing.T) {
 
 		ensureError(t, p.Parse(nil))
 
-		if got, want := p.argsProcessed, 0; got != want {
+		ensureStringSlicesMatch(t, p.Args(), nil)
+
+		if got, want := p.NArg(), 0; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{})
+		if got, want := p.NFlag(), 0; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("no flags but args", func(t *testing.T) {
@@ -249,10 +310,14 @@ func TestParseArgs(t *testing.T) {
 
 		ensureError(t, p.Parse([]string{"foo", "bar"}))
 
-		if got, want := p.argsProcessed, 0; got != want {
+		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+
+		if got, want := p.NArg(), 2; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+		if got, want := p.NFlag(), 0; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("some flags and no args", func(t *testing.T) {
@@ -266,10 +331,14 @@ func TestParseArgs(t *testing.T) {
 
 		ensureError(t, p.Parse([]string{"-b", "-i", "13"}))
 
-		if got, want := p.argsProcessed, 3; got != want {
+		ensureStringSlicesMatch(t, p.Args(), nil)
+
+		if got, want := p.NArg(), 0; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{})
+		if got, want := p.NFlag(), 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("some flags and args", func(t *testing.T) {
@@ -290,10 +359,14 @@ func TestParseArgs(t *testing.T) {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
-		if got, want := p.argsProcessed, 3; got != want {
+		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+
+		if got, want := p.NArg(), 2; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+		if got, want := p.NFlag(), 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("some flags and args without spaces", func(t *testing.T) {
@@ -314,10 +387,14 @@ func TestParseArgs(t *testing.T) {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
-		if got, want := p.argsProcessed, 2; got != want {
+		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+
+		if got, want := p.NArg(), 2; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+		if got, want := p.NFlag(), 2; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("some flags with escaped runes and args", func(t *testing.T) {
@@ -335,10 +412,14 @@ func TestParseArgs(t *testing.T) {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
-		if got, want := p.argsProcessed, 2; got != want {
+		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+
+		if got, want := p.NArg(), 2; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+		if got, want := p.NFlag(), 2; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 
 	t.Run("some flags with escaped runes and args", func(t *testing.T) {
@@ -356,10 +437,14 @@ func TestParseArgs(t *testing.T) {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
 
-		if got, want := p.argsProcessed, 3; got != want {
+		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+
+		if got, want := p.NArg(), 2; got != want {
 			t.Errorf("GOT: %v; WANT: %v", got, want)
 		}
-		ensureStringSlicesMatch(t, p.Args(), []string{"foo", "bar"})
+		if got, want := p.NFlag(), 3; got != want {
+			t.Errorf("GOT: %v; WANT: %v", got, want)
+		}
 	})
 }
 

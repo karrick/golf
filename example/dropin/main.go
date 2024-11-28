@@ -2,43 +2,50 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/karrick/golf"
 )
 
-// VersionString can be overridden during the build with command line parameters.
-var VersionString = "1.2.3"
-
 func main() {
-	optHelp := golf.BoolP('h', "help", false, "Display command line help and exit")
-	optLimit := golf.IntP('l', "limit", 0, "Limit output to specified number of lines")
-	optQuiet := golf.BoolP('q', "quiet", false, "Do not print intermediate errors to stderr")
-	optVerbose := golf.BoolP('v', "verbose", false, "Print verbose output to stderr")
-	optVersion := golf.BoolP('V', "version", false, "Print version to stderr and exit")
+	// 'Type' functions are exactly like their corresponding functions from
+	// the 'flag' standard library. However the length of the argument string
+	// determines whether a single or double-hyphen prefix is used to change
+	// its value. When this argument is a single rune long string then a
+	// single-hyphen prefix is used to change its value, for example, "V" will
+	// configure the parser to associate '-V' with the option. Otherwise a
+	// double-hyphen prefix is used to change its value, for example,
+	// "version" will configure the parser to associate '--version' with the
+	// option.
+	optType1 := golf.Bool("b", false, "can take a one rune flag name and return a variable pointer")
+	otpType2 := golf.String("id", "", "can also take a multiple rune flag name and return a variable pointer")
 
-	_ = golf.StringP('s', "servers", "host1,host2", "Some string")
-	_ = golf.String("t", "host3,host4", "Another string")
-	_ = golf.String("flubbers", "host5", "Yet another string")
+	// 'TypeP' functions take two arguments. The first argument is a rune to
+	// be associated with a single-hyphen prefix, for example, '-V'. The
+	// second argument is a string to be associated with a double-hyphen
+	// prefix, for example, '--version'.
+	optTypeP := golf.DurationP('d', "duration", 0, "takes a one rune and a multiple rune flag name and returns a pointer to a variable")
 
+	// The difference between 'Type' and 'TypeVar' is 'Type' returns a pointer
+	// to a variable, whereas 'TypeVar' accepts a pointer to a variable.
+	var optTypeVar float64
+	golf.FloatVar(&optTypeVar, "f", 6.02e-23, "optTypeVar takes a pointer to a variable and a single flag")
+
+	// For completeness, a 'TypeVarP' set of functions is also provided.
+	var optTypeVarP int64
+	golf.Int64VarP(&optTypeVarP, 'i', "int64", 13, "optTypeVarP takes a pointer to a variable, a rune, and a string")
+
+	// After the options have been declared, the `golf.Parse()` function will
+	// parse the command line options from `os.Args`.
 	golf.Parse()
 
-	if *optHelp || *optVersion {
-		fmt.Fprintf(os.Stderr, "%s version %s\n", filepath.Base(os.Args[0]), VersionString)
-		if *optHelp {
-			fmt.Fprintf(os.Stderr, "\texample program to demonstrate library usage\n\n")
-			golf.Usage()
-		}
-		os.Exit(0)
-	}
+	// Notice that the returned 'Type' and 'TypeP' functions return a pointer
+	// that must be referenced in order to obtain the value.
+	fmt.Println("optType: ", *optType1)
+	fmt.Println("optTypeP: ", *optTypeP)
 
-	fmt.Fprintf(os.Stderr, "# os.Args: %v\n", os.Args)
-	fmt.Fprintf(os.Stderr, "# golf.Args(): %v\n", golf.Args())
-	fmt.Fprintf(os.Stderr, "# golf.NArg(): %v\n", golf.NArg())
-	fmt.Fprintf(os.Stderr, "# golf.Arg(0): %v\n", golf.Arg(0))
-
-	fmt.Fprintf(os.Stderr, "# limit: %v\n", *optLimit)
-	fmt.Fprintf(os.Stderr, "# quiet: %t\n", *optQuiet)
-	fmt.Fprintf(os.Stderr, "# verbose: %t\n", *optVerbose)
+	// In contrast, the 'TypeVar' and 'TypeVarP' functions accept a pointer to
+	// the variable for the library to store its value, and accessing the
+	// value does not require a pointer dereference.
+	fmt.Println("optTypeVar: ", optTypeVar)
+	fmt.Println("optTypeVarP: ", optTypeVarP)
 }

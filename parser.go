@@ -11,7 +11,7 @@ import (
 
 // Parser can parse a series of command line arguments.
 type Parser struct {
-	flags              []option
+	options            []option
 	remainingArguments []string // keep track of remaining arguments
 	err                error
 	argsProcessed      int  // keep track of how many arguments have been set
@@ -19,8 +19,8 @@ type Parser struct {
 }
 
 // Arg returns the i'th command-line argument. Arg(0) is the first remaining
-// argument after flags have been processed. Arg returns an empty string if the
-// requested element does not exist.
+// argument after flags have been processed. Arg returns an empty string if
+// the requested element does not exist.
 func (p *Parser) Arg(i int) string {
 	if i < len(p.remainingArguments) {
 		return p.remainingArguments[i]
@@ -33,14 +33,14 @@ func (p *Parser) Args() []string {
 	return p.remainingArguments
 }
 
-// ensureNoRedefinition ensures the specified short and long flags do not
-// redefine any existing flag definitions.
-func (p *Parser) ensureNoRedefinition(short rune, long string) error {
-	for _, opt := range p.flags {
-		if long != "" && long == opt.Long() {
+// ensureNoRedefinition ensures the specified single and double hyphen prefix
+// options do not redefine any existing option definitions.
+func (p *Parser) ensureNoRedefinition(short string, long string) error {
+	for _, opt := range p.options {
+		if long != "" && opt.Long() == long {
 			return fmt.Errorf("cannot add option that duplicates long flag: %q", long)
 		}
-		if short != utf8.RuneError && short == opt.Short() {
+		if short != "" && opt.Short() == short {
 			return fmt.Errorf("cannot add option that duplicates short flag: %q", short)
 		}
 	}
@@ -52,11 +52,14 @@ func (p *Parser) Err() error {
 	return p.err
 }
 
-// flagFromLongName performs linear search for the flag with a matching long
-// flag name in the list of flags. It returns the flag found, or nil if the
-// requested long flag name was not found.
-func (p *Parser) flagFromLongName(long string) option {
-	for _, option := range p.flags {
+// optionFromDoubleHyphenPrefix performs linear search for the option with a
+// matching double-hyphen prefix in the list of options. It returns the option
+// found, or nil if the requested name was not found.
+func (p *Parser) optionFromDoubleHyphenPrefix(long string) option {
+	if long == "" {
+		return nil
+	}
+	for _, option := range p.options {
 		if option.Long() == long {
 			return option
 		}
@@ -64,12 +67,16 @@ func (p *Parser) flagFromLongName(long string) option {
 	return nil
 }
 
-// flagFromShortName performs linear search for the flag with a matching short
-// flag name in the list of flags. It returns the flag found, or nil if the
-// requested short flag name was not found.
-func (p *Parser) flagFromShortName(short rune) option {
-	for _, option := range p.flags {
-		if option.Short() == short {
+// optionFromSingleHyphenPrefix performs linear search for the option with a
+// matching single-hyphen prefix in the list of options. It returns the option
+// found, or nil if the requested short flag name was not found.
+func (p *Parser) optionFromSingleHyphenPrefix(short rune) option {
+	if utf8.RuneError == short {
+		return nil
+	}
+	s := fmt.Sprintf("%c", short)
+	for _, option := range p.options {
+		if option.Short() == s {
 			return option
 		}
 	}
@@ -82,20 +89,21 @@ func (p *Parser) NArg() int {
 	return len(p.remainingArguments)
 }
 
-// NFlag returns the number of command-line flags that have been set.
+// NFlag returns the number of command-line flags that have been processed.
 func (p *Parser) NFlag() int {
 	return p.argsProcessed
 }
 
+// Parse parses args.
 func (p *Parser) Parse(args []string) error {
 	if p.err != nil {
 		return p.err // cannot parse when in state of error
 	}
 
-	// reset parser
+	// Reset parser.
 	p.argsProcessed = 0
 	p.remainingArguments = p.remainingArguments[:0]
-	p.parsed = true
+	p.parsed = false
 
 	var flagType slurpType
 	var flagName, flagText string
@@ -107,6 +115,7 @@ func (p *Parser) Parse(args []string) error {
 		if flagType != nothingToSlurp {
 			p.err = slurpText(arg, flagType, f)
 			if p.err != nil {
+				p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 				return p.err
 			}
 			flagType = nothingToSlurp
@@ -136,10 +145,12 @@ func (p *Parser) Parse(args []string) error {
 				break // out of parsing this arg
 			} else if runeParserState == beginArgument {
 				if r != '-' {
-					debug("index: %d; this rune ends processing: %q\n", ai, r)
-					// remainingArguments = args[ai:]
-					// argsProcessed = ai
-					// return nil
+					if false {
+						debug("index: %d; this rune ends processing: %q\n", ai, r)
+						p.parsed = true
+						p.remainingArguments = append(p.remainingArguments, args[ai:]...)
+						return nil
+					}
 					runeParserState = wantArgument
 					break // out of parsing this arg
 				}
@@ -149,8 +160,8 @@ func (p *Parser) Parse(args []string) error {
 				case '-':
 					runeParserState = wantLongName
 				default:
-					if f = p.flagFromShortName(r); f == nil {
-						p.argsProcessed = ai
+					if f = p.optionFromSingleHyphenPrefix(r); f == nil {
+						p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 						p.err = fmt.Errorf("unknown flag: %q", r)
 						return p.err
 					}
@@ -163,8 +174,8 @@ func (p *Parser) Parse(args []string) error {
 					}
 				}
 			} else if runeParserState == wantShortFlagsOnly {
-				if f = p.flagFromShortName(r); f == nil {
-					p.argsProcessed = ai
+				if f = p.optionFromSingleHyphenPrefix(r); f == nil {
+					p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 					p.err = fmt.Errorf("unknown flag: %q", r)
 					return p.err
 				}
@@ -183,7 +194,7 @@ func (p *Parser) Parse(args []string) error {
 
 		switch runeParserState {
 		case consumedHyphen:
-			p.argsProcessed = ai
+			p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 			p.err = errors.New("hyphen without flags")
 			return p.err
 		case wantArgument:
@@ -200,6 +211,7 @@ func (p *Parser) Parse(args []string) error {
 			}
 			p.err = slurpText(flagText, flagType, f)
 			if p.err != nil {
+				p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 				return p.err
 			}
 			flagType = nothingToSlurp
@@ -209,13 +221,15 @@ func (p *Parser) Parse(args []string) error {
 			p.argsProcessed++
 		case wantLongName:
 			if flagName == "" {
-				p.argsProcessed = ai + 1
-				p.remainingArguments = args[p.argsProcessed:]
+				// double-hyphen: remaining arguments everything after this
+				p.argsProcessed++
+				p.parsed = true
+				p.remainingArguments = args[ai+1:]
 				return nil
 			}
-			if f = p.flagFromLongName(flagName); f == nil {
-				p.argsProcessed = ai
+			if f = p.optionFromDoubleHyphenPrefix(flagName); f == nil {
 				p.err = fmt.Errorf("unknown flag: %q", flagName)
+				p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 				return p.err
 			}
 			flagName = "" // reset
@@ -225,6 +239,7 @@ func (p *Parser) Parse(args []string) error {
 			p.argsProcessed++
 		default:
 			p.err = fmt.Errorf("TODO: handle runeParserState: %v", runeParserState)
+			p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 			return p.err
 		}
 
@@ -245,13 +260,13 @@ func (p *Parser) Parse(args []string) error {
 		return p.err
 	}
 
+	p.parsed = true
 	return nil
 }
 
 // parseShortAndLongFlag is called when there is both a short and a long flag to
 // validate and ensure there are no duplicates.
 func (p *Parser) parseShortAndLongFlag(short rune, long string) error {
-
 	switch short {
 	case utf8.RuneError:
 		return fmt.Errorf("cannot use flag with invalid rune: %q", short)
@@ -266,18 +281,18 @@ func (p *Parser) parseShortAndLongFlag(short rune, long string) error {
 		return fmt.Errorf("cannot use flag that starts with a hyphen: %q", long)
 	}
 
-	return p.ensureNoRedefinition(short, long)
+	return p.ensureNoRedefinition(fmt.Sprintf("%c", short), long)
 }
 
 // parseSingleFlag is called when there is a single flag, and it is not known
 // whether the flag is short or long. If validates the flag and ensures it is
 // not a duplicate.
-func (p *Parser) parseSingleFlag(flag string) (rune, string, error) {
+func (p *Parser) parseSingleFlag(flag string) (string, string, error) {
 	if flag == "" {
-		return utf8.RuneError, "", errors.New("cannot use empty flag string")
+		return "", "", errors.New("cannot use empty flag string")
 	}
 
-	var firstRune rune
+	var firstRune string
 	var bufIndex, runeCount int
 
 	// Ensure all bytes are valid runes
@@ -285,14 +300,15 @@ func (p *Parser) parseSingleFlag(flag string) (rune, string, error) {
 
 	for bufIndex < len(buf) {
 		thisRune, runeSize := utf8.DecodeRune(buf[bufIndex:])
+		thisRuneString := fmt.Sprintf("%c", thisRune)
 		if thisRune == utf8.RuneError {
-			return thisRune, "", fmt.Errorf("cannot use flag with invalid rune: %q", flag)
+			return thisRuneString, "", fmt.Errorf("cannot use flag with invalid rune: %q", flag)
 		}
 		if runeCount == 0 {
 			if thisRune == '-' {
-				return thisRune, "", fmt.Errorf("cannot use flag that starts with a hyphen: %q", flag)
+				return thisRuneString, "", fmt.Errorf("cannot use flag that starts with a hyphen: %q", flag)
 			}
-			firstRune = thisRune
+			firstRune = thisRuneString
 		}
 		runeCount++
 		bufIndex += runeSize
@@ -301,7 +317,7 @@ func (p *Parser) parseSingleFlag(flag string) (rune, string, error) {
 	if runeCount == 1 {
 		return firstRune, "", p.ensureNoRedefinition(firstRune, "")
 	}
-	return utf8.RuneError, flag, p.ensureNoRedefinition(utf8.RuneError, flag)
+	return "", flag, p.ensureNoRedefinition("", flag)
 }
 
 // Parsed reports whether the command-line flags have been parsed.
@@ -318,7 +334,7 @@ func (p *Parser) PrintDefaults() {
 // PrintDefaultsTo prints to w, a usage message showing the default settings of
 // all defined command-line flags.
 func (p *Parser) PrintDefaultsTo(w io.Writer) {
-	for _, opt := range p.flags {
+	for _, opt := range p.options {
 		var def, typeName string
 		description := opt.Description()
 		value := opt.Default()
@@ -337,11 +353,11 @@ func (p *Parser) PrintDefaultsTo(w io.Writer) {
 		short := opt.Short()
 		long := opt.Long()
 
-		if short != utf8.RuneError {
+		if short != "" {
 			if long != "" {
-				fmt.Fprintf(w, "  -%c, --%s%s%s\n", short, long, typeName, def)
+				fmt.Fprintf(w, "  -%s, --%s%s%s\n", short, long, typeName, def)
 			} else {
-				fmt.Fprintf(w, "  -%c%s%s\n", short, typeName, def)
+				fmt.Fprintf(w, "  -%s%s%s\n", short, typeName, def)
 			}
 		} else {
 			fmt.Fprintf(w, "  --%s%s%s\n", long, typeName, def)
