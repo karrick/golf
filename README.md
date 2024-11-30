@@ -62,7 +62,7 @@ func main() {
     // "version" will configure the parser to associate '--version' with the
     // option.
     optType1 := golf.Bool("b", false, "can take a one rune flag name and return a variable pointer")
-    otpType2 := golf.String("id", "", "can also take a multiple rune flag name and return a variable pointer")
+    optType2 := golf.String("id", "", "can also take a multiple rune flag name and return a variable pointer")
 
     // 'TypeP' functions take two arguments. The first argument is a rune to
     // be associated with a single-hyphen prefix, for example, '-V'. The
@@ -85,7 +85,8 @@ func main() {
 
     // Notice that the returned 'Type' and 'TypeP' functions return a pointer
     // that must be referenced in order to obtain the value.
-    fmt.Println("optType: ", *optType1)
+    fmt.Println("optType1: ", *optType1)
+    fmt.Println("optType2: ", *optType2)
     fmt.Println("optTypeP: ", *optTypeP)
 
     // In contrast, the 'TypeVar' and 'TypeVarP' functions accept a pointer to
