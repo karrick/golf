@@ -9,13 +9,13 @@ func TestBoolInvalid(t *testing.T) {
 	var a bool
 
 	ensureParserError(t, "cannot use empty flag string", func(t *testing.T, p *Parser) {
-		p.WithBoolVar(&a, "", "some example flag")
+		p.BoolVar(&a, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"-e\"", func(t *testing.T, p *Parser) {
-		p.WithBoolVar(&a, "-e", "some example flag")
+		p.BoolVar(&a, "-e", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"--example\"", func(t *testing.T, p *Parser) {
-		p.WithBoolVar(&a, "--example", "some example flag")
+		p.BoolVar(&a, "--example", "some example flag")
 	})
 }
 
@@ -23,8 +23,8 @@ func TestParseBoolShortOption(t *testing.T) {
 	var a bool
 	var b bool
 	var p Parser
-	p.WithBoolVar(&a, "v", "print verbose info")
-	p.WithBoolVar(&b, "V", "print version info")
+	p.BoolVar(&a, "v", "print verbose info")
+	p.BoolVar(&b, "V", "print version info")
 
 	t.Run("single option", func(t *testing.T) {
 		if got, want := p.Parse([]string{"-v"}), error(nil); got != want {
@@ -79,8 +79,8 @@ func TestParseBoolLongOption(t *testing.T) {
 	var p Parser
 	var a bool
 	var b bool
-	p.WithBoolVarP(&a, 'v', "verbose", "print verbose info")
-	p.WithBoolVarP(&b, 'V', "version", "print version info")
+	p.BoolVarP(&a, 'v', "verbose", "print verbose info")
+	p.BoolVarP(&b, 'V', "version", "print version info")
 
 	t.Run("single option", func(t *testing.T) {
 		if got, want := p.Parse([]string{"--verbose"}), error(nil); got != want {
@@ -123,16 +123,16 @@ func TestBoolPInvalid(t *testing.T) {
 	var a bool
 
 	ensureParserError(t, "cannot use flag with invalid rune", func(t *testing.T, p *Parser) {
-		p.WithBoolVarP(&a, utf8.RuneError, "", "some example flag")
+		p.BoolVarP(&a, utf8.RuneError, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use empty flag", func(t *testing.T, p *Parser) {
-		p.WithBoolVarP(&a, 'b', "", "some example flag")
+		p.BoolVarP(&a, 'b', "", "some example flag")
 	})
 	ensureParserError(t, "cannot use hyphen as a flag", func(t *testing.T, p *Parser) {
-		p.WithBoolVarP(&a, '-', "example", "some example flag")
+		p.BoolVarP(&a, '-', "example", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen", func(t *testing.T, p *Parser) {
-		p.WithBoolVarP(&a, 'e', "--example", "some example flag")
+		p.BoolVarP(&a, 'e', "--example", "some example flag")
 	})
 }
 
@@ -140,8 +140,8 @@ func TestParseBoolPShortOption(t *testing.T) {
 	var p Parser
 	var a bool
 	var b bool
-	p.WithBoolVarP(&a, 'v', "verbose", "print verbose info")
-	p.WithBoolVarP(&b, 'V', "version", "print version info")
+	p.BoolVarP(&a, 'v', "verbose", "print verbose info")
+	p.BoolVarP(&b, 'V', "version", "print version info")
 
 	t.Run("single option", func(t *testing.T) {
 		if got, want := p.Parse([]string{"-v"}), error(nil); got != want {
@@ -196,8 +196,8 @@ func TestParseBoolPLongOption(t *testing.T) {
 	var p Parser
 	var a bool
 	var b bool
-	p.WithBoolVarP(&a, 'v', "verbose", "print verbose info")
-	p.WithBoolVarP(&b, 'V', "version", "print version info")
+	p.BoolVarP(&a, 'v', "verbose", "print verbose info")
+	p.BoolVarP(&b, 'V', "version", "print version info")
 
 	t.Run("single option", func(t *testing.T) {
 		if got, want := p.Parse([]string{"--verbose"}), error(nil); got != want {

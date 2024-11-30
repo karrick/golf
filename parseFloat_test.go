@@ -10,13 +10,13 @@ func TestFloatInvalid(t *testing.T) {
 	var b float64
 
 	ensureParserError(t, "cannot use empty flag string", func(t *testing.T, p *Parser) {
-		p.WithFloatVar(&b, "", "some example flag")
+		p.FloatVar(&b, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"-e\"", func(t *testing.T, p *Parser) {
-		p.WithFloatVar(&b, "-e", "some example flag")
+		p.FloatVar(&b, "-e", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"--example\"", func(t *testing.T, p *Parser) {
-		p.WithFloatVar(&b, "--example", "some example flag")
+		p.FloatVar(&b, "--example", "some example flag")
 	})
 }
 
@@ -24,8 +24,8 @@ func TestParseFloatMissingArgument(t *testing.T) {
 	var p Parser
 	var a float64
 	var b float64
-	p.WithFloatVarP(&a, 't', "little", "little")
-	p.WithFloatVarP(&b, 'T', "big", "big")
+	p.FloatVarP(&a, 't', "little", "little")
+	p.FloatVarP(&b, 'T', "big", "big")
 
 	t.Run("short", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
@@ -52,8 +52,8 @@ func TestParseFloatShortOption(t *testing.T) {
 	var p Parser
 	a := math.NaN()
 	var b float64
-	p.WithFloatVar(&a, "t", "little")
-	p.WithFloatVar(&b, "T", "big")
+	p.FloatVar(&a, "t", "little")
+	p.FloatVar(&b, "T", "big")
 
 	t.Run("single option with space", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t", "3.14"}))
@@ -110,8 +110,8 @@ func TestParseFloatLongOption(t *testing.T) {
 	var p Parser
 	var a float64
 	var b float64
-	p.WithFloatVarP(&a, 't', "little", "little")
-	p.WithFloatVarP(&b, 'T', "big", "big")
+	p.FloatVarP(&a, 't', "little", "little")
+	p.FloatVarP(&b, 'T', "big", "big")
 
 	t.Run("both options", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"--little", "3.14", "--big", "2.78"}))
@@ -138,16 +138,16 @@ func TestFloatPInvalid(t *testing.T) {
 	var a float64
 
 	ensureParserError(t, "cannot use flag with invalid rune", func(t *testing.T, p *Parser) {
-		p.WithFloatVarP(&a, utf8.RuneError, "", "some example flag")
+		p.FloatVarP(&a, utf8.RuneError, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use empty flag", func(t *testing.T, p *Parser) {
-		p.WithFloatVarP(&a, 'b', "", "some example flag")
+		p.FloatVarP(&a, 'b', "", "some example flag")
 	})
 	ensureParserError(t, "cannot use hyphen as a flag", func(t *testing.T, p *Parser) {
-		p.WithFloatVarP(&a, '-', "example", "some example flag")
+		p.FloatVarP(&a, '-', "example", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen", func(t *testing.T, p *Parser) {
-		p.WithFloatVarP(&a, 'e', "--example", "some example flag")
+		p.FloatVarP(&a, 'e', "--example", "some example flag")
 	})
 }
 
@@ -155,8 +155,8 @@ func TestParseFloatPMissingArgument(t *testing.T) {
 	var p Parser
 	var a float64
 	var b float64
-	p.WithFloatVarP(&a, 't', "little", "little")
-	p.WithFloatVarP(&b, 'T', "big", "big")
+	p.FloatVarP(&a, 't', "little", "little")
+	p.FloatVarP(&b, 'T', "big", "big")
 
 	t.Run("short", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
@@ -183,8 +183,8 @@ func TestParseFloatPShortOption(t *testing.T) {
 	var p Parser
 	a := math.NaN()
 	var b float64
-	p.WithFloatVar(&a, "t", "little")
-	p.WithFloatVar(&b, "T", "big")
+	p.FloatVar(&a, "t", "little")
+	p.FloatVar(&b, "T", "big")
 
 	t.Run("single option with space", func(t *testing.T) {
 		if got, want := p.Parse([]string{"-t", "3.14"}), error(nil); got != want {
@@ -247,8 +247,8 @@ func TestParseFloatPLongOption(t *testing.T) {
 	var p Parser
 	var a float64
 	var b float64
-	p.WithFloatVarP(&a, 't', "little", "little")
-	p.WithFloatVarP(&b, 'T', "big", "big")
+	p.FloatVarP(&a, 't', "little", "little")
+	p.FloatVarP(&b, 'T', "big", "big")
 
 	t.Run("both options", func(t *testing.T) {
 		if got, want := p.Parse([]string{"--little", "3.14", "--big", "2.78"}), error(nil); got != want {

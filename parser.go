@@ -113,7 +113,7 @@ func (p *Parser) Parse(args []string) error {
 		debug("arg %d: %q; start argParserState: %v\n", ai, arg, flagType)
 
 		if flagType != nothingToSlurp {
-			p.err = slurpText(arg, flagType, f)
+			p.err = f.Callback(arg)
 			if p.err != nil {
 				p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 				return p.err
@@ -167,7 +167,7 @@ func (p *Parser) Parse(args []string) error {
 					}
 					switch flagType = f.NextSlurp(); flagType {
 					case nothingToSlurp:
-						*f.(*optionBool).pv = true
+						f.Callback("1")
 						runeParserState = wantShortFlagsOnly
 					default:
 						runeParserState = wantText
@@ -181,7 +181,7 @@ func (p *Parser) Parse(args []string) error {
 				}
 				switch flagType = f.NextSlurp(); flagType {
 				case nothingToSlurp:
-					*f.(*optionBool).pv = true
+					f.Callback("1")
 				default:
 					runeParserState = wantText
 				}
@@ -209,7 +209,7 @@ func (p *Parser) Parse(args []string) error {
 			if flagType == nothingToSlurp {
 				panic(fmt.Errorf("got text %q but invalid nextSlurp: %v", flagText, flagType))
 			}
-			p.err = slurpText(flagText, flagType, f)
+			p.err = f.Callback(flagText)
 			if p.err != nil {
 				p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 				return p.err
@@ -234,7 +234,7 @@ func (p *Parser) Parse(args []string) error {
 			}
 			flagName = "" // reset
 			if flagType = f.NextSlurp(); flagType == nothingToSlurp {
-				*f.(*optionBool).pv = true
+				f.Callback("1")
 			}
 			p.argsProcessed++
 		default:

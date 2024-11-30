@@ -10,13 +10,13 @@ func TestDurationInvalid(t *testing.T) {
 	var a time.Duration
 
 	ensureParserError(t, "cannot use empty flag string", func(t *testing.T, p *Parser) {
-		p.WithDurationVar(&a, "", "some example flag")
+		p.DurationVar(&a, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"-e\"", func(t *testing.T, p *Parser) {
-		p.WithDurationVar(&a, "-e", "some example flag")
+		p.DurationVar(&a, "-e", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"--example\"", func(t *testing.T, p *Parser) {
-		p.WithDurationVar(&a, "--example", "some example flag")
+		p.DurationVar(&a, "--example", "some example flag")
 	})
 }
 
@@ -24,8 +24,8 @@ func TestParseDurationMissingArgument(t *testing.T) {
 	var p Parser
 	var a time.Duration
 	var b time.Duration
-	p.WithDurationVarP(&a, 't', "little", "little")
-	p.WithDurationVarP(&b, 'T', "big", "big")
+	p.DurationVarP(&a, 't', "little", "little")
+	p.DurationVarP(&b, 'T', "big", "big")
 
 	t.Run("short", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
@@ -52,8 +52,8 @@ func TestParseDurationShortOption(t *testing.T) {
 	var p Parser
 	var a time.Duration
 	var b time.Duration
-	p.WithDurationVar(&a, "t", "little")
-	p.WithDurationVar(&b, "T", "big")
+	p.DurationVar(&a, "t", "little")
+	p.DurationVar(&b, "T", "big")
 
 	t.Run("single option with space", func(t *testing.T) {
 		if got, want := p.Parse([]string{"-t", "2m"}), error(nil); got != want {
@@ -120,8 +120,8 @@ func TestParseDurationLongOption(t *testing.T) {
 	var p Parser
 	var a time.Duration
 	var b time.Duration
-	p.WithDurationVarP(&a, 't', "little", "little")
-	p.WithDurationVarP(&b, 'T', "big", "big")
+	p.DurationVarP(&a, 't', "little", "little")
+	p.DurationVarP(&b, 'T', "big", "big")
 
 	t.Run("both options", func(t *testing.T) {
 		if got, want := p.Parse([]string{"--little", "2m", "--big", "3h"}), error(nil); got != want {
@@ -152,16 +152,16 @@ func TestDurationPInvalid(t *testing.T) {
 	var a time.Duration
 
 	ensureParserError(t, "cannot use flag with invalid rune", func(t *testing.T, p *Parser) {
-		p.WithDurationVarP(&a, utf8.RuneError, "", "some example flag")
+		p.DurationVarP(&a, utf8.RuneError, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use empty flag", func(t *testing.T, p *Parser) {
-		p.WithDurationVarP(&a, 'b', "", "some example flag")
+		p.DurationVarP(&a, 'b', "", "some example flag")
 	})
 	ensureParserError(t, "cannot use hyphen as a flag", func(t *testing.T, p *Parser) {
-		p.WithDurationVarP(&a, '-', "example", "some example flag")
+		p.DurationVarP(&a, '-', "example", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen", func(t *testing.T, p *Parser) {
-		p.WithDurationVarP(&a, 'e', "--example", "some example flag")
+		p.DurationVarP(&a, 'e', "--example", "some example flag")
 	})
 }
 
@@ -169,8 +169,8 @@ func TestParseDurationPMissingArgument(t *testing.T) {
 	var p Parser
 	var a time.Duration
 	var b time.Duration
-	p.WithDurationVarP(&a, 't', "little", "little")
-	p.WithDurationVarP(&b, 'T', "big", "big")
+	p.DurationVarP(&a, 't', "little", "little")
+	p.DurationVarP(&b, 'T', "big", "big")
 
 	t.Run("short", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument:")
@@ -197,8 +197,8 @@ func TestParseDurationPShortOption(t *testing.T) {
 	var p Parser
 	var a time.Duration
 	var b time.Duration
-	p.WithDurationVar(&a, "t", "little")
-	p.WithDurationVar(&b, "T", "big")
+	p.DurationVar(&a, "t", "little")
+	p.DurationVar(&b, "T", "big")
 
 	t.Run("single option with space", func(t *testing.T) {
 		if got, want := p.Parse([]string{"-t", "2m"}), error(nil); got != want {
@@ -265,8 +265,8 @@ func TestParseDurationPLongOption(t *testing.T) {
 	var p Parser
 	var a time.Duration
 	var b time.Duration
-	p.WithDurationVarP(&a, 't', "little", "little")
-	p.WithDurationVarP(&b, 'T', "big", "big")
+	p.DurationVarP(&a, 't', "little", "little")
+	p.DurationVarP(&b, 'T', "big", "big")
 
 	t.Run("both options", func(t *testing.T) {
 		if got, want := p.Parse([]string{"--little", "2m", "--big", "3h"}), error(nil); got != want {

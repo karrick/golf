@@ -3,31 +3,31 @@ package golf
 import "time"
 import "fmt"
 
-// WithBool returns a pointer to a bool command line option, allowing for
-// either a short or a long flag. If both are desired, use the BoolP function.
-func (p *Parser) WithBool(flag string, value bool, description string) *bool {
+// Bool returns a pointer to a bool command line option, allowing for either a
+// short or a long flag. If both are desired, use the BoolP function.
+func (p *Parser) Bool(flag string, value bool, description string) *bool {
 	v := value
-	p.WithBoolVar(&v, flag, description)
+	p.BoolVar(&v, flag, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithBoolP returns a pointer to a bool command line option, allowing for
-// both a short and a long flag.
-func (p *Parser) WithBoolP(short rune, long string, value bool, description string) *bool {
+// BoolP returns a pointer to a bool command line option, allowing for both a
+// short and a long flag.
+func (p *Parser) BoolP(short rune, long string, value bool, description string) *bool {
 	v := value
-	p.WithBoolVarP(&v, short, long, description)
+	p.BoolVarP(&v, short, long, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithBoolVar updates the Parser to recognize flag as a bool with the default
+// BoolVar updates the Parser to recognize flag as a bool with the default
 // value and description.
-func (p *Parser) WithBoolVar(pv *bool, flag string, description string) *Parser {
+func (p *Parser) BoolVar(pv *bool, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -47,9 +47,9 @@ func (p *Parser) WithBoolVar(pv *bool, flag string, description string) *Parser 
 	return p
 }
 
-// WithBoolVar updates the Parser to recognize short and long flag as a bool
-// with the default value and description.
-func (p *Parser) WithBoolVarP(pv *bool, short rune, long string, description string) *Parser {
+// BoolVar updates the Parser to recognize short and long flag as a bool with
+// the default value and description.
+func (p *Parser) BoolVarP(pv *bool, short rune, long string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -67,32 +67,32 @@ func (p *Parser) WithBoolVarP(pv *bool, short rune, long string, description str
 	return p
 }
 
-// WithDuration returns a pointer to a time.Duration command line option,
-// allowing for either a short or a long flag. If both are desired, use the
-// DurationP function.
-func (p *Parser) WithDuration(flag string, value time.Duration, description string) *time.Duration {
+// Duration returns a pointer to a time.Duration command line option, allowing
+// for either a short or a long flag. If both are desired, use the DurationP
+// function.
+func (p *Parser) Duration(flag string, value time.Duration, description string) *time.Duration {
 	v := value
-	p.WithDurationVar(&v, flag, description)
+	p.DurationVar(&v, flag, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithDurationP returns a pointer to a time.Duration command line option,
+// DurationP returns a pointer to a time.Duration command line option,
 // allowing for both a short and a long flag.
-func (p *Parser) WithDurationP(short rune, long string, value time.Duration, description string) *time.Duration {
+func (p *Parser) DurationP(short rune, long string, value time.Duration, description string) *time.Duration {
 	v := value
-	p.WithDurationVarP(&v, short, long, description)
+	p.DurationVarP(&v, short, long, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithDurationVar updates the Parser to recognize flag as a duration with the
+// DurationVar updates the Parser to recognize flag as a duration with the
 // default value and description.
-func (p *Parser) WithDurationVar(pv *time.Duration, flag string, description string) *Parser {
+func (p *Parser) DurationVar(pv *time.Duration, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -112,9 +112,9 @@ func (p *Parser) WithDurationVar(pv *time.Duration, flag string, description str
 	return p
 }
 
-// WithDurationVar updates the Parser to recognize short and long flag as a
+// DurationVarP updates the Parser to recognize short and long flag as a
 // duration with the default value and description.
-func (p *Parser) WithDurationVarP(pv *time.Duration, short rune, long string, description string) *Parser {
+func (p *Parser) DurationVarP(pv *time.Duration, short rune, long string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -132,32 +132,32 @@ func (p *Parser) WithDurationVarP(pv *time.Duration, short rune, long string, de
 	return p
 }
 
-// WithFloat returns a pointer to a float64 command line option, allowing for
+// Float returns a pointer to a float64 command line option, allowing for
 // either a short or a long flag. If both are desired, use the FloatP
 // function.
-func (p *Parser) WithFloat(flag string, value float64, description string) *float64 {
+func (p *Parser) Float(flag string, value float64, description string) *float64 {
 	v := value
-	p.WithFloatVar(&v, flag, description)
+	p.FloatVar(&v, flag, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithFloatP returns a pointer to a float64 command line option, allowing for
+// FloatP returns a pointer to a float64 command line option, allowing for
 // both a short and a long flag.
-func (p *Parser) WithFloatP(short rune, long string, value float64, description string) *float64 {
+func (p *Parser) FloatP(short rune, long string, value float64, description string) *float64 {
 	v := value
-	p.WithFloatVarP(&v, short, long, description)
+	p.FloatVarP(&v, short, long, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithFloatVar updates the Parser to recognize flag as a float with the
-// default value and description.
-func (p *Parser) WithFloatVar(pv *float64, flag string, description string) *Parser {
+// FloatVar updates the Parser to recognize flag as a float with the default
+// value and description.
+func (p *Parser) FloatVar(pv *float64, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -177,9 +177,9 @@ func (p *Parser) WithFloatVar(pv *float64, flag string, description string) *Par
 	return p
 }
 
-// WithFloatVar updates the Parser to recognize short and long flag as a float
+// FloatVarP updates the Parser to recognize short and long flag as a float
 // with the default value and description.
-func (p *Parser) WithFloatVarP(pv *float64, short rune, long string, description string) *Parser {
+func (p *Parser) FloatVarP(pv *float64, short rune, long string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -197,96 +197,95 @@ func (p *Parser) WithFloatVarP(pv *float64, short rune, long string, description
 	return p
 }
 
-// WithInt returns a pointer to a int command line option, allowing for either
-// a short or a long flag. If both are desired, use the IntP function.
-func (p *Parser) WithInt(flag string, value int, description string) *int {
+// Int returns a pointer to a int command line option, allowing for either a
+// short or a long flag. If both are desired, use the IntP function.
+func (p *Parser) Int(flag string, value int, description string) *int {
 	v := value
-	p.WithIntVar(&v, flag, description)
+	p.IntVar(&v, flag, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithIntP returns a pointer to a int command line option, allowing for both
+// IntP returns a pointer to a int command line option, allowing for both a
+// short and a long flag.
+func (p *Parser) IntP(short rune, long string, value int, description string) *int {
+	v := value
+	p.IntVarP(&v, short, long, description)
+	if err := p.Err(); err != nil {
+		panic(err)
+	}
+	return &v
+}
+
+// IntVar updates the Parser to recognize flag as a int with the default value
+// and description.
+func (p *Parser) IntVar(pv *int, flag string, description string) *Parser {
+	if p.err != nil {
+		return p
+	}
+	var short string
+	var long string
+	short, long, p.err = p.parseSingleFlag(flag)
+	if p.err != nil {
+		return p
+	}
+	p.options = append(p.options, &optionInt{
+		def:         *pv,
+		description: description,
+		long:        long,
+		pv:          pv,
+		short:       short,
+	})
+	return p
+}
+
+// IntVarP updates the Parser to recognize short and long flag as a int with
+// the default value and description.
+func (p *Parser) IntVarP(pv *int, short rune, long string, description string) *Parser {
+	if p.err != nil {
+		return p
+	}
+	p.err = p.parseShortAndLongFlag(short, long)
+	if p.err != nil {
+		return p
+	}
+	p.options = append(p.options, &optionInt{
+		def:         *pv,
+		description: description,
+		long:        long,
+		pv:          pv,
+		short:       fmt.Sprintf("%c", short),
+	})
+	return p
+}
+
+// Int64 returns a pointer to a int64 command line option, allowing for either
+// a short or a long flag. If both are desired, use the Int64P function.
+func (p *Parser) Int64(flag string, value int64, description string) *int64 {
+	v := value
+	p.Int64Var(&v, flag, description)
+	if err := p.Err(); err != nil {
+		panic(err)
+	}
+	return &v
+}
+
+// Int64P returns a pointer to a int64 command line option, allowing for both
 // a short and a long flag.
-func (p *Parser) WithIntP(short rune, long string, value int, description string) *int {
+func (p *Parser) Int64P(short rune, long string, value int64, description string) *int64 {
 	v := value
-	p.WithIntVarP(&v, short, long, description)
+	p.Int64VarP(&v, short, long, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithIntVar updates the Parser to recognize flag as a int with the default
+// Int64Var updates the Parser to recognize flag as a int64 with the default
 // value and description.
-func (p *Parser) WithIntVar(pv *int, flag string, description string) *Parser {
-	if p.err != nil {
-		return p
-	}
-	var short string
-	var long string
-	short, long, p.err = p.parseSingleFlag(flag)
-	if p.err != nil {
-		return p
-	}
-	p.options = append(p.options, &optionInt{
-		def:         *pv,
-		description: description,
-		long:        long,
-		pv:          pv,
-		short:       short,
-	})
-	return p
-}
-
-// WithIntVar updates the Parser to recognize short and long flag as a int
-// with the default value and description.
-func (p *Parser) WithIntVarP(pv *int, short rune, long string, description string) *Parser {
-	if p.err != nil {
-		return p
-	}
-	p.err = p.parseShortAndLongFlag(short, long)
-	if p.err != nil {
-		return p
-	}
-	p.options = append(p.options, &optionInt{
-		def:         *pv,
-		description: description,
-		long:        long,
-		pv:          pv,
-		short:       fmt.Sprintf("%c", short),
-	})
-	return p
-}
-
-// WithInt64 returns a pointer to a int64 command line option, allowing for
-// either a short or a long flag. If both are desired, use the Int64P
-// function.
-func (p *Parser) WithInt64(flag string, value int64, description string) *int64 {
-	v := value
-	p.WithInt64Var(&v, flag, description)
-	if err := p.Err(); err != nil {
-		panic(err)
-	}
-	return &v
-}
-
-// WithInt64P returns a pointer to a int64 command line option, allowing for
-// both a short and a long flag.
-func (p *Parser) WithInt64P(short rune, long string, value int64, description string) *int64 {
-	v := value
-	p.WithInt64VarP(&v, short, long, description)
-	if err := p.Err(); err != nil {
-		panic(err)
-	}
-	return &v
-}
-
-// WithInt64Var updates the Parser to recognize flag as a int64 with the
-// default value and description.
-func (p *Parser) WithInt64Var(pv *int64, flag string, description string) *Parser {
+func (p *Parser) Int64Var(pv *int64, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -306,9 +305,9 @@ func (p *Parser) WithInt64Var(pv *int64, flag string, description string) *Parse
 	return p
 }
 
-// WithInt64Var updates the Parser to recognize short and long flag as a int64
+// Int64VarP updates the Parser to recognize short and long flag as a int64
 // with the default value and description.
-func (p *Parser) WithInt64VarP(pv *int64, short rune, long string, description string) *Parser {
+func (p *Parser) Int64VarP(pv *int64, short rune, long string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -326,96 +325,96 @@ func (p *Parser) WithInt64VarP(pv *int64, short rune, long string, description s
 	return p
 }
 
-// WithString returns a postringer to a string command line option, allowing
-// for either a short or a long flag. If both are desired, use the StringP
+// String returns a pointer to a string command line option, allowing for
+// either a short or a long flag. If both are desired, use the StringP
 // function.
-func (p *Parser) WithString(flag string, value string, description string) *string {
+func (p *Parser) String(flag string, value string, description string) *string {
 	v := value
-	p.WithStringVar(&v, flag, description)
+	p.StringVar(&v, flag, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithStringP returns a postringer to a string command line option, allowing
-// for both a short and a long flag.
-func (p *Parser) WithStringP(short rune, long string, value string, description string) *string {
-	v := value
-	p.WithStringVarP(&v, short, long, description)
-	if err := p.Err(); err != nil {
-		panic(err)
-	}
-	return &v
-}
-
-// WithStringVar updates the Parser to recognize flag as a string with the
-// default value and description.
-func (p *Parser) WithStringVar(pv *string, flag string, description string) *Parser {
-	if p.err != nil {
-		return p
-	}
-	var short string
-	var long string
-	short, long, p.err = p.parseSingleFlag(flag)
-	if p.err != nil {
-		return p
-	}
-	p.options = append(p.options, &optionString{
-		def:         *pv,
-		description: description,
-		long:        long,
-		pv:          pv,
-		short:       short,
-	})
-	return p
-}
-
-// WithStringVar updates the Parser to recognize short and long flag as a
-// string with the default value and description.
-func (p *Parser) WithStringVarP(pv *string, short rune, long string, description string) *Parser {
-	if p.err != nil {
-		return p
-	}
-	p.err = p.parseShortAndLongFlag(short, long)
-	if p.err != nil {
-		return p
-	}
-	p.options = append(p.options, &optionString{
-		def:         *pv,
-		description: description,
-		long:        long,
-		pv:          pv,
-		short:       fmt.Sprintf("%c", short),
-	})
-	return p
-}
-
-// WithUint returns a pouinter to a uint command line option, allowing for
-// either a short or a long flag. If both are desired, use the UintP function.
-func (p *Parser) WithUint(flag string, value uint, description string) *uint {
-	v := value
-	p.WithUintVar(&v, flag, description)
-	if err := p.Err(); err != nil {
-		panic(err)
-	}
-	return &v
-}
-
-// WithUintP returns a pouinter to a uint command line option, allowing for
+// StringP returns a pointer to a string command line option, allowing for
 // both a short and a long flag.
-func (p *Parser) WithUintP(short rune, long string, value uint, description string) *uint {
+func (p *Parser) StringP(short rune, long string, value string, description string) *string {
 	v := value
-	p.WithUintVarP(&v, short, long, description)
+	p.StringVarP(&v, short, long, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithUintVar updates the Parser to recognize flag as a uint with the default
+// StringVar updates the Parser to recognize flag as a string with the default
 // value and description.
-func (p *Parser) WithUintVar(pv *uint, flag string, description string) *Parser {
+func (p *Parser) StringVar(pv *string, flag string, description string) *Parser {
+	if p.err != nil {
+		return p
+	}
+	var short string
+	var long string
+	short, long, p.err = p.parseSingleFlag(flag)
+	if p.err != nil {
+		return p
+	}
+	p.options = append(p.options, &optionString{
+		def:         *pv,
+		description: description,
+		long:        long,
+		pv:          pv,
+		short:       short,
+	})
+	return p
+}
+
+// StringVarP updates the Parser to recognize short and long flag as a string
+// with the default value and description.
+func (p *Parser) StringVarP(pv *string, short rune, long string, description string) *Parser {
+	if p.err != nil {
+		return p
+	}
+	p.err = p.parseShortAndLongFlag(short, long)
+	if p.err != nil {
+		return p
+	}
+	p.options = append(p.options, &optionString{
+		def:         *pv,
+		description: description,
+		long:        long,
+		pv:          pv,
+		short:       fmt.Sprintf("%c", short),
+	})
+	return p
+}
+
+// Uint returns a pouinter to a uint command line option, allowing for either
+// a short or a long flag. If both are desired, use the UintP function.
+func (p *Parser) Uint(flag string, value uint, description string) *uint {
+	v := value
+	p.UintVar(&v, flag, description)
+	if err := p.Err(); err != nil {
+		panic(err)
+	}
+	return &v
+}
+
+// UintP returns a pouinter to a uint command line option, allowing for both a
+// short and a long flag.
+func (p *Parser) UintP(short rune, long string, value uint, description string) *uint {
+	v := value
+	p.UintVarP(&v, short, long, description)
+	if err := p.Err(); err != nil {
+		panic(err)
+	}
+	return &v
+}
+
+// UintVar updates the Parser to recognize flag as a uint with the default
+// value and description.
+func (p *Parser) UintVar(pv *uint, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -435,9 +434,9 @@ func (p *Parser) WithUintVar(pv *uint, flag string, description string) *Parser 
 	return p
 }
 
-// WithUintVar updates the Parser to recognize short and long flag as a uint
-// with the default value and description.
-func (p *Parser) WithUintVarP(pv *uint, short rune, long string, description string) *Parser {
+// UintVarP updates the Parser to recognize short and long flag as a uint with
+// the default value and description.
+func (p *Parser) UintVarP(pv *uint, short rune, long string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -455,31 +454,32 @@ func (p *Parser) WithUintVarP(pv *uint, short rune, long string, description str
 	return p
 }
 
-// WithUint64 returns a pouinter to a uint64 command line option, allowing for
-// either a short or a long flag. If both are desired, use the Uint64P function.
-func (p *Parser) WithUint64(flag string, value uint64, description string) *uint64 {
+// Uint64 returns a pouinter to a uint64 command line option, allowing for
+// either a short or a long flag. If both are desired, use the Uint64P
+// function.
+func (p *Parser) Uint64(flag string, value uint64, description string) *uint64 {
 	v := value
-	p.WithUint64Var(&v, flag, description)
+	p.Uint64Var(&v, flag, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithUint64P returns a pouinter to a uint64 command line option, allowing for
+// Uint64P returns a pouinter to a uint64 command line option, allowing for
 // both a short and a long flag.
-func (p *Parser) WithUint64P(short rune, long string, value uint64, description string) *uint64 {
+func (p *Parser) Uint64P(short rune, long string, value uint64, description string) *uint64 {
 	v := value
-	p.WithUint64VarP(&v, short, long, description)
+	p.Uint64VarP(&v, short, long, description)
 	if err := p.Err(); err != nil {
 		panic(err)
 	}
 	return &v
 }
 
-// WithUint64Var updates the Parser to recognize flag as a uint64 with the
-// default value and description.
-func (p *Parser) WithUint64Var(pv *uint64, flag string, description string) *Parser {
+// Uint64Var updates the Parser to recognize flag as a uint64 with the default
+// value and description.
+func (p *Parser) Uint64Var(pv *uint64, flag string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}
@@ -499,9 +499,9 @@ func (p *Parser) WithUint64Var(pv *uint64, flag string, description string) *Par
 	return p
 }
 
-// WithUint64Var updates the Parser to recognize short and long flag as a
-// uint64 with the default value and description.
-func (p *Parser) WithUint64VarP(pv *uint64, short rune, long string, description string) *Parser {
+// Uint64VarP updates the Parser to recognize short and long flag as a uint64
+// with the default value and description.
+func (p *Parser) Uint64VarP(pv *uint64, short rune, long string, description string) *Parser {
 	if p.err != nil {
 		return p
 	}

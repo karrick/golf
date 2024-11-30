@@ -9,13 +9,13 @@ func TestUintInvalid(t *testing.T) {
 	var b uint
 
 	ensureParserError(t, "cannot use empty flag string", func(t *testing.T, p *Parser) {
-		p.WithUintVar(&b, "", "some example flag")
+		p.UintVar(&b, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"-e\"", func(t *testing.T, p *Parser) {
-		p.WithUintVar(&b, "-e", "some example flag")
+		p.UintVar(&b, "-e", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen: \"--example\"", func(t *testing.T, p *Parser) {
-		p.WithUintVar(&b, "--example", "some example flag")
+		p.UintVar(&b, "--example", "some example flag")
 	})
 }
 
@@ -23,8 +23,8 @@ func TestParseUintMissingArgument(t *testing.T) {
 	var p Parser
 	var a uint
 	var b uint
-	p.WithUintVarP(&a, 't', "little", "little")
-	p.WithUintVarP(&b, 'T', "big", "big")
+	p.UintVarP(&a, 't', "little", "little")
+	p.UintVarP(&b, 'T', "big", "big")
 
 	t.Run("short", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
@@ -51,8 +51,8 @@ func TestParseUintShortOption(t *testing.T) {
 	var p Parser
 	var a uint
 	var b uint
-	p.WithUintVar(&a, "t", "little")
-	p.WithUintVar(&b, "T", "big")
+	p.UintVar(&a, "t", "little")
+	p.UintVar(&b, "T", "big")
 
 	t.Run("single option with space", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t", "13"}))
@@ -109,8 +109,8 @@ func TestParseUintLongOption(t *testing.T) {
 	var p Parser
 	var a uint
 	var b uint
-	p.WithUintVarP(&a, 't', "little", "little")
-	p.WithUintVarP(&b, 'T', "big", "big")
+	p.UintVarP(&a, 't', "little", "little")
+	p.UintVarP(&b, 'T', "big", "big")
 
 	t.Run("both options", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"--little", "13", "--big", "42"}))
@@ -137,16 +137,16 @@ func TestUintPInvalid(t *testing.T) {
 	var a uint
 
 	ensureParserError(t, "cannot use flag with invalid rune", func(t *testing.T, p *Parser) {
-		p.WithUintVarP(&a, utf8.RuneError, "", "some example flag")
+		p.UintVarP(&a, utf8.RuneError, "", "some example flag")
 	})
 	ensureParserError(t, "cannot use empty flag", func(t *testing.T, p *Parser) {
-		p.WithUintVarP(&a, 'b', "", "some example flag")
+		p.UintVarP(&a, 'b', "", "some example flag")
 	})
 	ensureParserError(t, "cannot use hyphen as a flag", func(t *testing.T, p *Parser) {
-		p.WithUintVarP(&a, '-', "example", "some example flag")
+		p.UintVarP(&a, '-', "example", "some example flag")
 	})
 	ensureParserError(t, "cannot use flag that starts with a hyphen", func(t *testing.T, p *Parser) {
-		p.WithUintVarP(&a, 'e', "--example", "some example flag")
+		p.UintVarP(&a, 'e', "--example", "some example flag")
 	})
 }
 
@@ -154,8 +154,8 @@ func TestParseUintPMissingArgument(t *testing.T) {
 	var p Parser
 	var a uint
 	var b uint
-	p.WithUintVarP(&a, 't', "little", "little")
-	p.WithUintVarP(&b, 'T', "big", "big")
+	p.UintVarP(&a, 't', "little", "little")
+	p.UintVarP(&b, 'T', "big", "big")
 
 	t.Run("short", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t"}), "flag requires argument")
@@ -182,8 +182,8 @@ func TestParseUintPShortOption(t *testing.T) {
 	var p Parser
 	var a uint
 	var b uint
-	p.WithUintVar(&a, "t", "little")
-	p.WithUintVar(&b, "T", "big")
+	p.UintVar(&a, "t", "little")
+	p.UintVar(&b, "T", "big")
 
 	t.Run("single option with space", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"-t", "13"}))
@@ -240,8 +240,8 @@ func TestParseUintPLongOption(t *testing.T) {
 	var p Parser
 	var a uint
 	var b uint
-	p.WithUintVarP(&a, 't', "little", "little")
-	p.WithUintVarP(&b, 'T', "big", "big")
+	p.UintVarP(&a, 't', "little", "little")
+	p.UintVarP(&b, 'T', "big", "big")
 
 	t.Run("both options", func(t *testing.T) {
 		ensureError(t, p.Parse([]string{"--little", "13", "--big", "42"}))

@@ -1,10 +1,6 @@
 package golf
 
-import (
-	"fmt"
-	"strconv"
-	"time"
-)
+import "fmt"
 
 type slurpType uint
 
@@ -72,32 +68,4 @@ func (state runeParserStateType) String() string {
 	default:
 		return fmt.Sprintf("unknown rune parser state value: %d", int(state))
 	}
-}
-
-// seems to be both in parser and slurp
-func slurpText(text string, nextSlurp slurpType, f option) error {
-	var ui64 uint64
-	var err error
-
-	switch nextSlurp {
-	case slurpDuration:
-		*f.(*optionDuration).pv, err = time.ParseDuration(text)
-	case slurpFloat:
-		*f.(*optionFloat).pv, err = strconv.ParseFloat(text, 64)
-	case slurpInt:
-		*f.(*optionInt).pv, err = strconv.Atoi(text)
-	case slurpInt64:
-		*f.(*optionInt64).pv, err = strconv.ParseInt(text, 10, 64)
-	case slurpUint:
-		ui64, err = strconv.ParseUint(text, 10, 0)
-		*f.(*optionUint).pv = uint(ui64)
-	case slurpUint64:
-		*f.(*optionUint64).pv, err = strconv.ParseUint(text, 10, 64)
-	case slurpString:
-		*f.(*optionString).pv = text
-	default:
-		err = fmt.Errorf("unexpected slurp state: %v", nextSlurp)
-	}
-
-	return err
 }

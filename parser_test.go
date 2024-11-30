@@ -24,9 +24,9 @@ func TestParseComplex(t *testing.T) {
 	var p Parser
 
 	p.
-		WithBoolVarP(&b, 'v', "verbose", "print verbose info").
-		WithIntVarP(&i, 'l', "limit", "limit results").
-		WithStringVarP(&s, 's', "servers", "ask servers")
+		BoolVarP(&b, 'v', "verbose", "print verbose info").
+		IntVarP(&i, 'l', "limit", "limit results").
+		StringVarP(&s, 's', "servers", "ask servers")
 
 	err := p.Parse([]string{"-l", "4", "-v", "-s", "host1,host2", "some", "other", "arguments"})
 	ensureError(t, err)
@@ -58,9 +58,9 @@ func TestParseComplexSomeFlagsAfterArgs(t *testing.T) {
 	var p Parser
 
 	p.
-		WithBoolVarP(&b, 'v', "verbose", "print verbose info").
-		WithIntVarP(&i, 'l', "limit", "limit results").
-		WithStringVarP(&s, 's', "servers", "ask servers")
+		BoolVarP(&b, 'v', "verbose", "print verbose info").
+		IntVarP(&i, 'l', "limit", "limit results").
+		StringVarP(&s, 's', "servers", "ask servers")
 
 	err := p.Parse([]string{"-l", "4", "some", "-v", "other", "-s", "host1,host2", "arguments"})
 	ensureError(t, err)
@@ -92,9 +92,9 @@ func TestParseStopsAfterDoubleHyphen(t *testing.T) {
 	var p Parser
 
 	p.
-		WithBoolVarP(&b, 'v', "verbose", "print verbose info").
-		WithIntVarP(&i, 'l', "limit", "limit results").
-		WithStringVarP(&s, 's', "servers", "ask servers")
+		BoolVarP(&b, 'v', "verbose", "print verbose info").
+		IntVarP(&i, 'l', "limit", "limit results").
+		StringVarP(&s, 's', "servers", "ask servers")
 
 	err := p.Parse([]string{"--limit", "4", "--verbose", "--", "--servers", "host1,host2", "some", "other", "arguments"})
 	ensureError(t, err)
@@ -126,9 +126,9 @@ func TestParseConfused(t *testing.T) {
 	var p Parser
 
 	p.
-		WithBoolVarP(&b, 'v', "verbose", "print verbose info").
-		WithIntVarP(&i, 'l', "limit", "limit results").
-		WithStringVarP(&s, 's', "servers", "ask servers")
+		BoolVarP(&b, 'v', "verbose", "print verbose info").
+		IntVarP(&i, 'l', "limit", "limit results").
+		StringVarP(&s, 's', "servers", "ask servers")
 
 	err := p.Parse([]string{"-vs"})
 	ensureError(t, err, "flag requires argument")
@@ -157,9 +157,9 @@ func TestParseHyphenAfterShort(t *testing.T) {
 	var p Parser
 
 	p.
-		WithBoolVarP(&b, 'v', "verbose", "print verbose info").
-		WithIntVarP(&i, 'l', "limit", "limit results").
-		WithStringVarP(&s, 's', "servers", "ask servers")
+		BoolVarP(&b, 'v', "verbose", "print verbose info").
+		IntVarP(&i, 'l', "limit", "limit results").
+		StringVarP(&s, 's', "servers", "ask servers")
 
 	err := p.Parse([]string{"-v-l"})
 	ensureError(t, err, "unknown flag: '-'")
@@ -186,9 +186,9 @@ func TestPanicsWhenAttemptToRedefineFlag(t *testing.T) {
 		var a, b uint
 		var p Parser
 
-		p.WithUintVarP(&a, 'f', "flubber", "example one")
+		p.UintVarP(&a, 'f', "flubber", "example one")
 		ensureError(t, p.Err())
-		p.WithUintVarP(&b, 'f', "blubber", "example two")
+		p.UintVarP(&b, 'f', "blubber", "example two")
 		ensureError(t, p.Err(), "cannot add option that duplicates short flag")
 	})
 
@@ -196,9 +196,9 @@ func TestPanicsWhenAttemptToRedefineFlag(t *testing.T) {
 		var a, b uint
 		var p Parser
 
-		p.WithUintVarP(&a, 'f', "flubber", "example one")
+		p.UintVarP(&a, 'f', "flubber", "example one")
 		ensureError(t, p.Err())
-		p.WithUintVarP(&b, 'b', "flubber", "example two")
+		p.UintVarP(&b, 'b', "flubber", "example two")
 		ensureError(t, p.Err(), "cannot add option that duplicates long flag")
 	})
 }
@@ -212,10 +212,10 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		var p Parser
 
 		p.
-			WithIntVarP(&a, 'a', "alpha", "some integer").
-			WithBoolVarP(&b, 'b', "bravo", "some bool").
-			WithStringVarP(&c, 'c', "string", "some string").
-			WithBoolVarP(&d, 'd', "delta", "some bool")
+			IntVarP(&a, 'a', "alpha", "some integer").
+			BoolVarP(&b, 'b', "bravo", "some bool").
+			StringVarP(&c, 'c', "string", "some string").
+			BoolVarP(&d, 'd', "delta", "some bool")
 
 		err := p.Parse([]string{"-ba", "13", "-c", "foo"})
 		ensureError(t, err)
@@ -254,10 +254,10 @@ func TestParseShortWithOptionAfterShortWithoutOptions(t *testing.T) {
 		var p Parser
 
 		p.
-			WithIntVarP(&a, 'a', "alpha", "some integer").
-			WithBoolVarP(&b, 'b', "bravo", "some bool").
-			WithStringVarP(&c, 'c', "string", "some string").
-			WithBoolVarP(&d, 'd', "delta", "some bool")
+			IntVarP(&a, 'a', "alpha", "some integer").
+			BoolVarP(&b, 'b', "bravo", "some bool").
+			StringVarP(&c, 'c', "string", "some string").
+			BoolVarP(&d, 'd', "delta", "some bool")
 
 		err := p.Parse([]string{"-ba13", "-c", "foo"})
 		ensureError(t, err)
@@ -326,8 +326,8 @@ func TestParseArgs(t *testing.T) {
 		var p Parser
 
 		p.
-			WithBoolVar(&b, "b", "").
-			WithIntVar(&i, "i", "")
+			BoolVar(&b, "b", "").
+			IntVar(&i, "i", "")
 
 		ensureError(t, p.Parse([]string{"-b", "-i", "13"}))
 
@@ -347,8 +347,8 @@ func TestParseArgs(t *testing.T) {
 		var p Parser
 
 		p.
-			WithBoolVar(&b, "b", "").
-			WithIntVar(&i, "i", "")
+			BoolVar(&b, "b", "").
+			IntVar(&i, "i", "")
 
 		ensureError(t, p.Parse([]string{"-b", "-i", "13", "foo", "bar"}))
 
@@ -375,8 +375,8 @@ func TestParseArgs(t *testing.T) {
 		var p Parser
 
 		p.
-			WithBoolVar(&b, "b", "").
-			WithIntVar(&i, "i", "")
+			BoolVar(&b, "b", "").
+			IntVar(&i, "i", "")
 
 		ensureError(t, p.Parse([]string{"-b", "-i13", "foo", "bar"}))
 
@@ -403,8 +403,8 @@ func TestParseArgs(t *testing.T) {
 		var p Parser
 
 		p.
-			WithBoolVar(&b, "b", "").
-			WithStringVar(&s, "s", "")
+			BoolVar(&b, "b", "").
+			StringVar(&s, "s", "")
 
 		ensureError(t, p.Parse([]string{"-b", "-s ", "foo", "bar"}))
 
@@ -428,8 +428,8 @@ func TestParseArgs(t *testing.T) {
 		var p Parser
 
 		p.
-			WithBoolVar(&b, "b", "").
-			WithStringVar(&s, "s", "")
+			BoolVar(&b, "b", "").
+			StringVar(&s, "s", "")
 
 		ensureError(t, p.Parse([]string{"-b", "-s", " ", "foo", "bar"}))
 
@@ -453,8 +453,8 @@ func BenchmarkBool(b *testing.B) {
 	d := "\n"
 	var p Parser
 	p.
-		WithBoolVarP(&u, 'u', "unfold", "unfold").
-		WithStringVarP(&d, 'd', "delimiter", "delimiter")
+		BoolVarP(&u, 'u', "unfold", "unfold").
+		StringVarP(&d, 'd', "delimiter", "delimiter")
 
 	b.ResetTimer()
 
@@ -481,8 +481,8 @@ func BenchmarkString(b *testing.B) {
 	var p Parser
 
 	p.
-		WithBoolVarP(&u, 'u', "unfold", "unfold").
-		WithStringVarP(&d, 'd', "delimiter", "delimiter")
+		BoolVarP(&u, 'u', "unfold", "unfold").
+		StringVarP(&d, 'd', "delimiter", "delimiter")
 
 	b.ResetTimer()
 

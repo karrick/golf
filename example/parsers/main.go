@@ -35,8 +35,9 @@ func foo(args []string) {
 	// Declare and configure a parser to handle the command line options for
 	// the 'foo' sub-command.
 	var p golf.Parser
-	optBool := p.WithBool("b", false, "some bool")
-	optDuration := p.WithDurationP('d', "duration", 0, "some duration")
+
+	optBool := p.Bool("b", false, "some bool")
+	optDuration := p.DurationP('d', "duration", 0, "some duration")
 
 	// After the parser has been configured, use it to parse the command line
 	// arguments provided to this function.
@@ -60,8 +61,8 @@ func bar(args []string) {
 	// Declare and configure a parser to handle the command line options for
 	// the 'bar' sub-command.
 	var p golf.Parser
-	optInt := p.WithInt("i", 0, "some int")
-	optString := p.WithString("s", "", "some string")
+	optInt := p.Int("i", 0, "some int")
+	optString := p.String("s", "", "some string")
 
 	// After the parser has been configured, use it to parse the command line
 	// arguments provided to this function.
