@@ -42,15 +42,16 @@ func (slurp slurpType) String() string {
 	}
 }
 
-// runeParserStateType represents the possible states of the parser, implemented as a state machine.
+// runeParserStateType represents the possible states of the parser,
+// implemented as a state machine.
 type runeParserStateType uint
 
 const (
-	beginArgument runeParserStateType = iota
-	consumedHyphen
-	wantLongName
-	wantShortFlagsOnly
-	wantText
+	beginArgument      runeParserStateType = iota //
+	consumedHyphen                                //
+	wantLongName                                  //
+	wantShortFlagsOnly                            //
+	wantText                                      //
 	wantArgument
 )
 

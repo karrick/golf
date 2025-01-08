@@ -16,6 +16,13 @@ type Parser struct {
 	err                error
 	argsProcessed      int  // keep track of how many arguments have been set
 	parsed             bool // keep track of whether command line arguments have been parsed
+	allowUnknown       bool // allow unknown flags
+}
+
+// AllowUnknown updates the Parser to either allow or disallow unknown
+// arguments.
+func (p *Parser) AllowUnknown(allowUnknown bool) {
+	p.allowUnknown = allowUnknown
 }
 
 // Arg returns the i'th command-line argument. Arg(0) is the first remaining
@@ -130,11 +137,10 @@ func (p *Parser) Parse(args []string) error {
 		for bi, r := range arg { // bi (byte index)
 			debug("  runeParserState: %v; rune: %q\n", runeParserState, r)
 
-			// NOTE: Cannot put this in switch statement because this needs
-			// need to be able to break out of enclosing for statement that
-			// loops over arg runes, and continue processing not the next
-			// argument, but with the switch statement following this inner
-			// loop.
+			// NOTE: Cannot put this in switch statement because this needs to
+			// be able to break out of enclosing for statement that loops over
+			// arg runes, and continue processing not the next argument, but
+			// with the switch statement following this inner loop.
 			if runeParserState == wantText {
 				flagText = arg[bi:]
 				debug("  FLAG TEXT: %q\n", flagText)
@@ -156,14 +162,19 @@ func (p *Parser) Parse(args []string) error {
 				}
 				runeParserState = consumedHyphen
 			} else if runeParserState == consumedHyphen {
-				switch r {
-				case '-':
+				if r == '-' {
 					runeParserState = wantLongName
-				default:
+				} else {
 					if f = p.optionFromSingleHyphenPrefix(r); f == nil {
-						p.remainingArguments = append(p.remainingArguments, args[ai:]...)
-						p.err = fmt.Errorf("unknown flag: %q", r)
-						return p.err
+						if !p.allowUnknown {
+							p.remainingArguments = append(p.remainingArguments, args[ai:]...)
+							p.err = fmt.Errorf("unknown flag: %q", r)
+							return p.err
+						}
+						pseudoArg := fmt.Sprintf("-%s", arg[bi:])
+						p.remainingArguments = append(p.remainingArguments, pseudoArg)
+						runeParserState = beginArgument
+						break // out of parsing this arg
 					}
 					switch flagType = f.NextSlurp(); flagType {
 					case nothingToSlurp:
@@ -175,9 +186,15 @@ func (p *Parser) Parse(args []string) error {
 				}
 			} else if runeParserState == wantShortFlagsOnly {
 				if f = p.optionFromSingleHyphenPrefix(r); f == nil {
-					p.remainingArguments = append(p.remainingArguments, args[ai:]...)
-					p.err = fmt.Errorf("unknown flag: %q", r)
-					return p.err
+					if !p.allowUnknown {
+						p.remainingArguments = append(p.remainingArguments, args[ai:]...)
+						p.err = fmt.Errorf("unknown flag: %q", r)
+						return p.err
+					}
+					pseudoArg := fmt.Sprintf("-%s", arg[bi:])
+					p.remainingArguments = append(p.remainingArguments, pseudoArg)
+					runeParserState = beginArgument
+					break // out of parsing this arg
 				}
 				switch flagType = f.NextSlurp(); flagType {
 				case nothingToSlurp:
@@ -193,6 +210,10 @@ func (p *Parser) Parse(args []string) error {
 		debug("  POST: runeParserState: %v\n", runeParserState)
 
 		switch runeParserState {
+		case beginArgument:
+			// ???
+			debug("  new arguments: %q\n", args[ai:])
+			// p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 		case consumedHyphen:
 			p.remainingArguments = append(p.remainingArguments, args[ai:]...)
 			p.err = errors.New("hyphen without flags")
@@ -228,9 +249,14 @@ func (p *Parser) Parse(args []string) error {
 				return nil
 			}
 			if f = p.optionFromDoubleHyphenPrefix(flagName); f == nil {
-				p.err = fmt.Errorf("unknown flag: %q", flagName)
-				p.remainingArguments = append(p.remainingArguments, args[ai:]...)
-				return p.err
+				if !p.allowUnknown {
+					p.err = fmt.Errorf("unknown flag: %q", flagName)
+					p.remainingArguments = append(p.remainingArguments, args[ai:]...)
+					return p.err
+				}
+				p.remainingArguments = append(p.remainingArguments, arg)
+				runeParserState = beginArgument
+				continue // with next argument
 			}
 			flagName = "" // reset
 			if flagType = f.NextSlurp(); flagType == nothingToSlurp {
